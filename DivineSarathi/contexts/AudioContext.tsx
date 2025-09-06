@@ -20,6 +20,14 @@ interface AudioContextType {
     stop: () => Promise<void>;
   };
   
+  // Shankha audio controls
+  shankhaAudio: {
+    isPlaying: boolean;
+    isPaused: boolean;
+    start: () => Promise<void>;
+    stop: () => Promise<void>;
+  };
+  
   // Global pause/play all audio
   pauseAllAudio: () => Promise<void>;
   resumeAllAudio: (language: 'english' | 'hindi') => Promise<void>;
@@ -55,12 +63,18 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     isPaused: false,
   });
   
+  const [shankhaAudioState, setShankhaAudioState] = useState({
+    isPlaying: false,
+    isPaused: false,
+  });
+  
   const [isPaused, setIsPaused] = useState(false);
   
   const backgroundSoundRef = useRef<Audio.Sound | null>(null);
   const disclaimerSoundRef = useRef<Audio.Sound | null>(null);
+  const shankhaSoundRef = useRef<Audio.Sound | null>(null);
 
-  const isAnyAudioPlaying = backgroundMusicState.isPlaying || disclaimerAudioState.isPlaying;
+  const isAnyAudioPlaying = backgroundMusicState.isPlaying || disclaimerAudioState.isPlaying || shankhaAudioState.isPlaying;
 
   useEffect(() => {
     // Configure audio mode for better performance
@@ -121,6 +135,27 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       disclaimerSoundRef.current = sound;
     } catch (error) {
       console.error('Error loading disclaimer audio:', error);
+    }
+  };
+
+  const loadShankhaAudio = async () => {
+    try {
+      if (shankhaSoundRef.current) {
+        await shankhaSoundRef.current.unloadAsync();
+      }
+
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/audio/shankha.m4a'),
+        {
+          shouldPlay: false,
+          isLooping: false,
+          volume: 0.9, // High volume for shankha
+        }
+      );
+
+      shankhaSoundRef.current = sound;
+    } catch (error) {
+      console.error('Error loading shankha audio:', error);
     }
   };
 
@@ -198,6 +233,32 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   };
 
+  const startShankha = async () => {
+    try {
+      if (!shankhaSoundRef.current) {
+        await loadShankhaAudio();
+      }
+      
+      if (shankhaSoundRef.current && !shankhaAudioState.isPlaying) {
+        await shankhaSoundRef.current.playAsync();
+        setShankhaAudioState({ isPlaying: true, isPaused: false });
+      }
+    } catch (error) {
+      console.error('Error playing shankha audio:', error);
+    }
+  };
+
+  const stopShankha = async () => {
+    try {
+      if (shankhaSoundRef.current) {
+        await shankhaSoundRef.current.stopAsync();
+        setShankhaAudioState({ isPlaying: false, isPaused: false });
+      }
+    } catch (error) {
+      console.error('Error stopping shankha audio:', error);
+    }
+  };
+
   const pauseAllAudio = async () => {
     setIsPaused(true);
     await Promise.all([
@@ -239,6 +300,12 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       play: playDisclaimerAudio,
       pause: pauseDisclaimerAudio,
       stop: stopDisclaimerAudio,
+    },
+    shankhaAudio: {
+      isPlaying: shankhaAudioState.isPlaying,
+      isPaused: shankhaAudioState.isPaused,
+      start: startShankha,
+      stop: stopShankha,
     },
     pauseAllAudio,
     resumeAllAudio,

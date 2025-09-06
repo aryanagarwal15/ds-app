@@ -69,6 +69,7 @@ export default function UserDetailsPage() {
 
   const handleDisclaimerChange = (isAccepted: boolean) => {
     setIsDisclaimerAccepted(isAccepted);
+    router.replace("/OnboardingTransition");
   };
 
   // Check if user details are complete but disclaimer is not
