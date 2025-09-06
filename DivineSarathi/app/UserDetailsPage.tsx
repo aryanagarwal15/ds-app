@@ -48,18 +48,18 @@ export default function UserDetailsPage() {
     try {
       // Save user details to server
       // @ts-ignore
-      await dispatch(saveUserDetails(selectedAge, selectedGender));
-      
-      console.log("User Details saved:", { age: selectedAge, gender: selectedGender });
-      
+      dispatch(saveUserDetails(selectedAge, selectedGender));
+
+      console.log("User Details saved:", {
+        age: selectedAge,
+        gender: selectedGender,
+      });
+
       // Navigation will be handled by the main index.tsx based on completion status
-      router.replace("/");
+      router.replace("/Home");
     } catch (error) {
       console.error("Error saving user details:", error);
-      Alert.alert(
-        "Error",
-        "Failed to save your details. Please try again."
-      );
+      Alert.alert("Error", "Failed to save your details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,6 @@ export default function UserDetailsPage() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-
         {/* Main Content */}
         <View style={styles.contentSection}>
           {/* Disclaimer Section - 25% */}
@@ -106,7 +105,8 @@ export default function UserDetailsPage() {
                 <TouchableOpacity
                   style={[
                     styles.continueButton,
-                    (!selectedAge || !selectedGender) && styles.continueButtonDisabled,
+                    (!selectedAge || !selectedGender) &&
+                      styles.continueButtonDisabled,
                   ]}
                   onPress={handleContinue}
                   disabled={!selectedAge || !selectedGender || loading}
@@ -125,7 +125,8 @@ export default function UserDetailsPage() {
                     <Text
                       style={[
                         styles.buttonText,
-                        (!selectedAge || !selectedGender) && styles.buttonTextDisabled,
+                        (!selectedAge || !selectedGender) &&
+                          styles.buttonTextDisabled,
                       ]}
                     >
                       Continue
@@ -133,7 +134,7 @@ export default function UserDetailsPage() {
                     <Ionicons
                       name="arrow-forward"
                       size={20}
-                      color={(selectedAge && selectedGender) ? "#8B1538" : "#999"}
+                      color={selectedAge && selectedGender ? "#8B1538" : "#999"}
                       style={styles.buttonIcon}
                     />
                   </LinearGradient>

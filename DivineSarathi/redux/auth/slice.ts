@@ -306,7 +306,7 @@ export const saveUserDetails =
         },
         body: JSON.stringify({
           key: "AGE",
-          value: parseInt(age),
+          value: age,
         }),
       });
 

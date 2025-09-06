@@ -29,12 +29,12 @@ interface LanguageOption {
 
 const languages: LanguageOption[] = [
   {
-    code: "en",
+    code: "english",
     name: "English",
     nativeName: "English",
   },
   {
-    code: "hi",
+    code: "hindi",
     name: "Hindi",
     nativeName: "हिंदी",
   },
