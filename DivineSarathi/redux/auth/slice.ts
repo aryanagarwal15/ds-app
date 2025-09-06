@@ -12,6 +12,7 @@ interface UserProfile {
   completionStatus?: {
     hasLanguage: boolean;
     hasUserDetails: boolean;
+    hasDisclaimer: boolean;
     isComplete: boolean;
   };
 }
@@ -26,8 +27,6 @@ interface AuthState {
     name?: string;
   } | null;
   userProfile: UserProfile | null;
-  languagePreference: string | null;
-  hasCompletedLanguageSelection: boolean;
 }
 
 const initialState: AuthState = {
@@ -36,8 +35,6 @@ const initialState: AuthState = {
   token: null,
   user: null,
   userProfile: null,
-  languagePreference: null,
-  hasCompletedLanguageSelection: false,
 };
 
 const authSlice = createSlice({
@@ -58,12 +55,6 @@ const authSlice = createSlice({
     },
     setUserProfile(state, action: PayloadAction<UserProfile>) {
       state.userProfile = action.payload;
-    },
-    setLanguagePreference(state, action: PayloadAction<string>) {
-      state.languagePreference = action.payload;
-    },
-    setHasCompletedLanguageSelection(state, action: PayloadAction<boolean>) {
-      state.hasCompletedLanguageSelection = action.payload;
     },
     logout(state) {
       // Reset to initial state to ensure complete cleanup
@@ -88,8 +79,6 @@ export const {
   setToken,
   setUser,
   setUserProfile,
-  setLanguagePreference,
-  setHasCompletedLanguageSelection,
   logout,
   resetToInitialState,
 } = authSlice.actions;
@@ -146,18 +135,6 @@ export const checkAuth = () => async (dispatch: any) => {
   try {
     const token = await AsyncStorage.getItem("authToken");
     const authenticated = await AsyncStorage.getItem("authenticated");
-    const languagePreference = await AsyncStorage.getItem("languagePreference");
-    const hasCompletedLanguageSelection = await AsyncStorage.getItem(
-      "hasCompletedLanguageSelection"
-    );
-
-    // Load language preferences regardless of auth status
-    if (languagePreference) {
-      dispatch(setLanguagePreference(languagePreference));
-    }
-    if (hasCompletedLanguageSelection === "true") {
-      dispatch(setHasCompletedLanguageSelection(true));
-    }
 
     if (token && authenticated === "true") {
       // Verify token is still valid
@@ -223,14 +200,10 @@ export const fetchUserProfile = () => async (dispatch: any, getState: any) => {
     });
 
     if (response.ok) {
+      
       const result = await response.json();
-
+      console.log(result.data);
       dispatch(setUserProfile(result.data));
-      // Update language preference based on server data
-      if (result.data.language) {
-        dispatch(setLanguagePreference(result.data.language));
-        dispatch(setHasCompletedLanguageSelection(true));
-      }
 
       return result.data;
     } else {
@@ -269,22 +242,176 @@ export const setLanguagePreferenceThunk =
         if (!response.ok) {
           throw new Error("Failed to save language preference to server");
         }
+
+        // Update local profile state
+        if (auth.userProfile) {
+          dispatch(
+            setUserProfile({
+              ...auth.userProfile,
+              completionStatus: {
+                ...auth.userProfile.completionStatus,
+                hasLanguage: true,
+              },
+              language: language,
+            })
+          );
+        }
       }
-
-      // Store language preference in AsyncStorage
-      await AsyncStorage.setItem("languagePreference", language);
-      await AsyncStorage.setItem("hasCompletedLanguageSelection", "true");
-
-      // Update Redux state
-      dispatch(setLanguagePreference(language));
-      dispatch(setHasCompletedLanguageSelection(true));
     } catch (error) {
       console.error("Error saving language preference:", error);
       throw error;
     }
   };
 
-// Thunk for saving user details (age and gender)
+// Thunk for saving disclaimer acceptance
+export const saveDisclaimerAcceptance =
+  () => async (dispatch: any, getState: any) => {
+    try {
+      console.log("Saving disclaimer acceptance");
+      const { auth } = getState();
+      const token = auth.token;
+
+      if (!token) {
+        throw new Error("No auth token available");
+      }
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.CONSENT.CREATE), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          terms_accepted: true,
+          consent_type: "Disclaimer",
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(response);
+        throw new Error("Failed to save disclaimer acceptance to server");
+      }
+
+      console.log("Disclaimer acceptance saved successfully");
+
+      // Update local profile state
+      if (auth.userProfile) {
+        dispatch(
+          setUserProfile({
+            ...auth.userProfile,
+            completionStatus: {
+              ...auth.userProfile.completionStatus,
+              hasDisclaimer: true,
+              isComplete:
+                auth.userProfile.completionStatus.hasLanguage &&
+                auth.userProfile.completionStatus.hasUserDetails,
+            },
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error saving disclaimer acceptance:", error);
+      throw error;
+    }
+  };
+
+// Thunk for saving age only
+export const saveUserAge =
+  (age: string) => async (dispatch: any, getState: any) => {
+    try {
+      console.log("Saving user age:", age);
+
+      const { auth } = getState();
+      const token = auth.token;
+
+      if (!token) {
+        throw new Error("No auth token available");
+      }
+
+      // Save age to server
+      const ageResponse = await fetch(buildApiUrl(API_ENDPOINTS.USER.INFO), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key: "AGE",
+          value: age,
+        }),
+      });
+
+      if (!ageResponse.ok) {
+        throw new Error("Failed to save age to server");
+      }
+
+      // Update local profile state
+      if (auth.userProfile) {
+        dispatch(
+          setUserProfile({
+            ...auth.userProfile,
+            age: parseInt(age) || null,
+          })
+        );
+      }
+
+      console.log("Age saved successfully");
+    } catch (error) {
+      console.error("Error saving age:", error);
+      throw error;
+    }
+  };
+
+// Thunk for saving gender only
+export const saveUserGender =
+  (gender: string) => async (dispatch: any, getState: any) => {
+    try {
+      console.log("Saving user gender:", gender);
+
+      const { auth } = getState();
+      const token = auth.token;
+
+      if (!token) {
+        throw new Error("No auth token available");
+      }
+
+      // Save gender to server
+      const genderResponse = await fetch(buildApiUrl(API_ENDPOINTS.USER.INFO), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key: "GENDER",
+          value: gender,
+        }),
+      });
+
+      if (!genderResponse.ok) {
+        throw new Error("Failed to save gender to server");
+      }
+
+      // Update local profile state and fetch updated profile to refresh completion status
+      if (auth.userProfile) {
+        dispatch(
+          setUserProfile({
+            ...auth.userProfile,
+            gender: gender,
+          })
+        );
+      }
+
+      // Fetch updated profile to get completion status
+      await dispatch(fetchUserProfile());
+
+      console.log("Gender saved successfully");
+    } catch (error) {
+      console.error("Error saving gender:", error);
+      throw error;
+    }
+  };
+
+// Thunk for saving user details (age and gender) - legacy function
 export const saveUserDetails =
   (age: string, gender: string) => async (dispatch: any, getState: any) => {
     try {
@@ -345,13 +472,7 @@ export const logoutUser = () => async (dispatch: any) => {
     console.log("LOGOUT - Starting complete logout process");
 
     // Clear all AsyncStorage keys related to the app
-    const keysToRemove = [
-      "authToken",
-      "authenticated",
-      "languagePreference",
-      "hasCompletedLanguageSelection",
-      // Add any other AsyncStorage keys your app uses
-    ];
+    const keysToRemove = ["authToken", "authenticated"];
 
     // Remove all keys in parallel for better performance
     await Promise.all(keysToRemove.map((key) => AsyncStorage.removeItem(key)));

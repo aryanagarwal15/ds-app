@@ -55,6 +55,11 @@ export const API_ENDPOINTS = {
     INFO: '/user/info',
     PROFILE: '/user/profile',
   },
+
+  // Consent management
+  CONSENT: {
+    CREATE: '/consent/create',
+  },
   
   // Add more endpoints as needed
 } as const;

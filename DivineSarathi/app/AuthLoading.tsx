@@ -35,8 +35,11 @@ export default function AuthLoading() {
       }
 
       // If language selected but no user details (age/gender), go to user details
-      if (completionStatus?.hasLanguage && !completionStatus?.hasUserDetails) {
-        router.replace("/UserDetailsPage");
+      if (
+        completionStatus?.hasLanguage &&
+        (!completionStatus?.hasUserDetails || !completionStatus?.hasDisclaimer)
+      ) {
+        router.replace("/UserDetailsPage"); 
         return;
       }
 
