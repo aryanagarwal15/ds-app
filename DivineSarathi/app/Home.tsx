@@ -23,7 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import changeNavigationBarColor from "react-native-navigation-bar-color";
 import * as SystemUI from "expo-system-ui";
 import { useDispatch } from "react-redux";
-import { authenticate } from "../redux/auth/slice";
+import { logoutUser } from "../redux/auth/slice";
 import type { AppDispatch } from "../redux/store";
 import { router } from "expo-router";
 
@@ -210,22 +210,34 @@ const Home: React.FC = () => {
   }, [typingDot1Anim, typingDot2Anim, typingDot3Anim]);
 
   // Handle logout
-  const handleLogout = useCallback(() => {
-    cleanup();
-    cleanupLocalStream();
-    setIsRecording(false);
-    setTranscript("");
-    setResponse("");
-    stopPulseAnimation();
-    stopRippleAnimation();
-    dispatch(authenticate(false));
-    router.replace("/Onboarding");
+  const handleLogout = useCallback(async () => {
+    try {
+      // Clean up local state
+      cleanup();
+      cleanupLocalStream();
+      setIsRecording(false);
+      setTranscript("");
+      setResponse("");
+      stopPulseAnimation();
+      stopRippleAnimation();
+      
+      // Perform complete logout (clears Redux store and AsyncStorage)
+      await dispatch(logoutUser() as any);
+      
+      // Navigate to onboarding
+      router.replace("/Onboarding");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Still navigate even if logout fails
+      router.replace("/Onboarding");
+    }
   }, [
     cleanup,
     cleanupLocalStream,
     dispatch,
     stopPulseAnimation,
     stopRippleAnimation,
+    router,
   ]);
 
   // Start a new conversation when recording begins

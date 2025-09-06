@@ -47,7 +47,7 @@ export default function Onboarding() {
         if (token) {
           // @ts-ignore
           dispatch(authenticateWithGoogle(token));
-          router.replace("/LanguageSelection");
+          router.replace("/AuthLoading");
         } else {
           Alert.alert("Error", "Authentication failed. Please try again.");
         }

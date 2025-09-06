@@ -11,10 +11,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { setLanguagePreferenceThunk } from "../redux/auth/slice";
+import { setLanguagePreferenceThunk, fetchUserProfile } from "../redux/auth/slice";
+import { RootState } from "../redux/store";
+import { useEffect } from "react";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,8 +24,7 @@ interface LanguageOption {
   code: string;
   name: string;
   nativeName: string;
-  icon: string;
-  description: string;
+
 }
 
 const languages: LanguageOption[] = [
@@ -42,8 +43,16 @@ const languages: LanguageOption[] = [
 export default function LanguageSelection() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { userProfile } = useSelector((state: RootState) => state.auth);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Check if user profile is complete and navigate directly to Home
+  useEffect(() => {
+    if (userProfile?.completionStatus?.isComplete) {
+      router.replace("/Home");
+    }
+  }, [userProfile, router]);
 
   const handleLanguageSelect = (languageCode: string) => {
     setSelectedLanguage(languageCode);
@@ -60,12 +69,16 @@ export default function LanguageSelection() {
 
     setLoading(true);
     try {
-      // Save language preference to Redux and AsyncStorage
+      // Save language preference to server and local storage
       // @ts-ignore
       await dispatch(setLanguagePreferenceThunk(selectedLanguage));
+      
+      // Fetch updated user profile to get latest completion status
+      // @ts-ignore
+      const updatedProfile = await dispatch(fetchUserProfile());
 
-      // Navigate to Home page
-      router.replace("/Home");
+      // Navigation will be handled by the main index.tsx based on completion status
+      router.replace("/");
     } catch (error) {
       console.error("Error saving language preference:", error);
       Alert.alert(
@@ -199,7 +212,7 @@ export default function LanguageSelection() {
                       !selectedLanguage && styles.buttonTextDisabled,
                     ]}
                   >
-                    Continue to Divine Sarathi
+                    Continue
                   </Text>
                   <Ionicons
                     name="arrow-forward"

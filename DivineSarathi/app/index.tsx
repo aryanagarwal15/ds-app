@@ -1,26 +1,60 @@
 import { Redirect } from "expo-router";
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../redux/store';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { checkAuth } from '../redux/auth/slice';
 
 export default function Index() {
-    const { authenticated, loading, hasCompletedLanguageSelection } = useSelector((state: RootState) => state.auth);
+    const [storeInitialized, setStoreInitialized] = useState(false);
+    
+    const { authenticated = false, loading = true, userProfile = null } = useSelector((state: RootState) => {
+        // Check if state is properly initialized
+        if (state && state.auth && !storeInitialized) {
+            setStoreInitialized(true);
+        }
+        
+        return state?.auth || { authenticated: false, loading: true, userProfile: null };
+    });
     const dispatch = useDispatch();
 
     useEffect(() => {
-      // @ts-ignore
-      dispatch(checkAuth());
-    }, [dispatch]);
+      if (storeInitialized) {
+        // @ts-ignore
+        dispatch(checkAuth());
+      }
+    }, [dispatch, storeInitialized]);
 
-    if (loading) return null; // or a loading spinner
+
+    // Show loading if store is not initialized yet
+    if (!storeInitialized || loading) return null; // or a loading spinner
     
-    // Route based on authentication and language selection status
+    // Route based on authentication and user profile completion status
     if (!authenticated) {
       return <Redirect href="/Onboarding" />;
-    } else if (!hasCompletedLanguageSelection) {
+    }
+    
+    // If authenticated but no user profile data yet, show loading
+    if (!userProfile) {
+      return null; // Loading user profile data
+    }
+    
+    const { completionStatus } = userProfile;
+    
+    // If no language selected, go to language selection
+    if (!completionStatus?.hasLanguage) {
       return <Redirect href="/LanguageSelection" />;
-    } else {
+    }
+    
+    // If language selected but no user details (age/gender), go to user details
+    if (completionStatus?.hasLanguage && !completionStatus?.hasUserDetails) {
+      return <Redirect href="/UserDetailsPage" />;
+    }
+    
+    // If both language and user details are complete, go to home
+    if (completionStatus?.isComplete) {
       return <Redirect href="/Home" />;
     }
+    
+    // Fallback to language selection
+    return <Redirect href="/LanguageSelection" />;
   }

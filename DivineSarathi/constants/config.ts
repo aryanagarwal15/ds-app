@@ -50,6 +50,12 @@ export const API_ENDPOINTS = {
     CREATE: '/session/create',
   },
   
+  // User management
+  USER: {
+    INFO: '/user/info',
+    PROFILE: '/user/profile',
+  },
+  
   // Add more endpoints as needed
 } as const;
 

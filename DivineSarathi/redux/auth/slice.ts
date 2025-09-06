@@ -1,6 +1,20 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { buildApiUrl, API_ENDPOINTS, API_CONFIG } from "../../constants/config";
+import { RESET_STORE } from "../types";
+
+interface UserProfile {
+  username?: string;
+  email?: string;
+  language?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  completionStatus?: {
+    hasLanguage: boolean;
+    hasUserDetails: boolean;
+    isComplete: boolean;
+  };
+}
 
 interface AuthState {
   authenticated: boolean;
@@ -11,6 +25,7 @@ interface AuthState {
     email?: string;
     name?: string;
   } | null;
+  userProfile: UserProfile | null;
   languagePreference: string | null;
   hasCompletedLanguageSelection: boolean;
 }
@@ -20,6 +35,7 @@ const initialState: AuthState = {
   loading: true,
   token: null,
   user: null,
+  userProfile: null,
   languagePreference: null,
   hasCompletedLanguageSelection: false,
 };
@@ -40,6 +56,9 @@ const authSlice = createSlice({
     setUser(state, action: PayloadAction<AuthState["user"]>) {
       state.user = action.payload;
     },
+    setUserProfile(state, action: PayloadAction<UserProfile>) {
+      state.userProfile = action.payload;
+    },
     setLanguagePreference(state, action: PayloadAction<string>) {
       state.languagePreference = action.payload;
     },
@@ -47,60 +66,73 @@ const authSlice = createSlice({
       state.hasCompletedLanguageSelection = action.payload;
     },
     logout(state) {
-      state.authenticated = false;
-      state.token = null;
-      state.user = null;
-      state.languagePreference = null;
-      state.hasCompletedLanguageSelection = false;
+      // Reset to initial state to ensure complete cleanup
+      Object.assign(state, initialState);
     },
+    resetToInitialState(state) {
+      // Alternative action for resetting to initial state
+      Object.assign(state, initialState);
+    },
+  },
+  extraReducers: (builder) => {
+    // Listen for global store reset
+    builder.addCase(RESET_STORE, (state) => {
+      Object.assign(state, initialState);
+    });
   },
 });
 
-export const { 
-  setAuthenticated, 
-  setLoading, 
-  setToken, 
-  setUser, 
+export const {
+  setAuthenticated,
+  setLoading,
+  setToken,
+  setUser,
+  setUserProfile,
   setLanguagePreference,
   setHasCompletedLanguageSelection,
-  logout 
+  logout,
+  resetToInitialState,
 } = authSlice.actions;
 
 // Thunk for Google authentication with token
-export const authenticateWithGoogle = (token: string) => async (dispatch: any) => {
-  try {
-    console.log("Authenticating with Google token:", token);
-    
-    // Store token in AsyncStorage
-    await AsyncStorage.setItem("authToken", token);
-    await AsyncStorage.setItem("authenticated", "true");
-    
-    // Verify token with your server
-    const response = await fetch(buildApiUrl(API_ENDPOINTS.AUTH.CHECK), {
-      method: "POST",
-      headers: {
-        ...API_CONFIG.HEADERS,
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-    
-    if (response.ok) {
-      dispatch(setToken(token));
-      dispatch(setAuthenticated(true));
-      
-      // You could also decode the JWT token to get user info
-      // For now, we'll just set authenticated state
-    } else {
-      throw new Error("Token verification failed");
+export const authenticateWithGoogle =
+  (token: string) => async (dispatch: any) => {
+    try {
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem("authToken", token);
+      await AsyncStorage.setItem("authenticated", "true");
+
+      // Verify token with your server
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.AUTH.CHECK), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        dispatch(setToken(token));
+        dispatch(setAuthenticated(true));
+
+        // Fetch user profile after successful authentication
+        try {
+          await dispatch(fetchUserProfile());
+        } catch (profileError) {
+          console.warn("Failed to fetch user profile:", profileError);
+          // Don't fail authentication if profile fetch fails
+        }
+      } else {
+        throw new Error("Token verification failed");
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      // Clear invalid token
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("authenticated");
+      throw error;
     }
-  } catch (error) {
-    console.error("Authentication error:", error);
-    // Clear invalid token
-    await AsyncStorage.removeItem("authToken");
-    await AsyncStorage.removeItem("authenticated");
-    throw error;
-  }
-};
+  };
 
 // Thunk for setting auth and persisting to AsyncStorage (legacy)
 export const authenticate = (auth: boolean) => async (dispatch: any) => {
@@ -115,10 +147,10 @@ export const checkAuth = () => async (dispatch: any) => {
     const token = await AsyncStorage.getItem("authToken");
     const authenticated = await AsyncStorage.getItem("authenticated");
     const languagePreference = await AsyncStorage.getItem("languagePreference");
-    const hasCompletedLanguageSelection = await AsyncStorage.getItem("hasCompletedLanguageSelection");
-    
-    console.log("Checking auth - token exists:", !!token, "authenticated:", authenticated, "language:", languagePreference);
-    
+    const hasCompletedLanguageSelection = await AsyncStorage.getItem(
+      "hasCompletedLanguageSelection"
+    );
+
     // Load language preferences regardless of auth status
     if (languagePreference) {
       dispatch(setLanguagePreference(languagePreference));
@@ -126,20 +158,31 @@ export const checkAuth = () => async (dispatch: any) => {
     if (hasCompletedLanguageSelection === "true") {
       dispatch(setHasCompletedLanguageSelection(true));
     }
-    
+
     if (token && authenticated === "true") {
       // Verify token is still valid
       const response = await fetch(buildApiUrl(API_ENDPOINTS.AUTH.CHECK), {
         method: "POST",
         headers: {
           ...API_CONFIG.HEADERS,
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         dispatch(setToken(token));
         dispatch(setAuthenticated(true));
+
+        // Fetch user profile after successful token verification
+        try {
+          const userProfile = await dispatch(fetchUserProfile());
+        } catch (profileError) {
+          console.warn(
+            "Failed to fetch user profile during auth check:",
+            profileError
+          );
+          // Don't fail authentication if profile fetch fails
+        }
       } else {
         // Token is invalid, clear it
         await AsyncStorage.removeItem("authToken");
@@ -160,32 +203,170 @@ export const checkAuth = () => async (dispatch: any) => {
   }
 };
 
-// Thunk for setting language preference
-export const setLanguagePreferenceThunk = (language: string) => async (dispatch: any) => {
+// Thunk to fetch user profile
+export const fetchUserProfile = () => async (dispatch: any, getState: any) => {
   try {
-    console.log("Setting language preference:", language);
-    
-    // Store language preference in AsyncStorage
-    await AsyncStorage.setItem("languagePreference", language);
-    await AsyncStorage.setItem("hasCompletedLanguageSelection", "true");
-    
-    // Update Redux state
-    dispatch(setLanguagePreference(language));
-    dispatch(setHasCompletedLanguageSelection(true));
-    
+    const { auth } = getState();
+    const token = auth.token;
+    console.log(auth);
+
+    if (!token) {
+      throw new Error("No auth token available");
+    }
+
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.USER.PROFILE), {
+      method: "GET",
+      headers: {
+        ...API_CONFIG.HEADERS,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      dispatch(setUserProfile(result.data));
+      // Update language preference based on server data
+      if (result.data.language) {
+        dispatch(setLanguagePreference(result.data.language));
+        dispatch(setHasCompletedLanguageSelection(true));
+      }
+
+      return result.data;
+    } else {
+      console.log("FETCH PROFILE - Response not OK:", response.status);
+      throw new Error("Failed to fetch user profile");
+    }
   } catch (error) {
-    console.error("Error saving language preference:", error);
+    console.error("Error fetching user profile:", error);
     throw error;
   }
 };
 
-// Thunk for logout
+// Thunk for setting language preference
+export const setLanguagePreferenceThunk =
+  (language: string) => async (dispatch: any, getState: any) => {
+    try {
+      console.log("Setting language preference:", language);
+
+      const { auth } = getState();
+      const token = auth.token;
+
+      // Save to server if authenticated
+      if (token) {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.USER.INFO), {
+          method: "POST",
+          headers: {
+            ...API_CONFIG.HEADERS,
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            key: "LANGUAGE",
+            value: language,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save language preference to server");
+        }
+      }
+
+      // Store language preference in AsyncStorage
+      await AsyncStorage.setItem("languagePreference", language);
+      await AsyncStorage.setItem("hasCompletedLanguageSelection", "true");
+
+      // Update Redux state
+      dispatch(setLanguagePreference(language));
+      dispatch(setHasCompletedLanguageSelection(true));
+    } catch (error) {
+      console.error("Error saving language preference:", error);
+      throw error;
+    }
+  };
+
+// Thunk for saving user details (age and gender)
+export const saveUserDetails =
+  (age: string, gender: string) => async (dispatch: any, getState: any) => {
+    try {
+      console.log("Saving user details:", { age, gender });
+
+      const { auth } = getState();
+      const token = auth.token;
+
+      if (!token) {
+        throw new Error("No auth token available");
+      }
+
+      // Save age to server
+      const ageResponse = await fetch(buildApiUrl(API_ENDPOINTS.USER.INFO), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key: "AGE",
+          value: parseInt(age),
+        }),
+      });
+
+      if (!ageResponse.ok) {
+        throw new Error("Failed to save age to server");
+      }
+
+      // Save gender to server
+      const genderResponse = await fetch(buildApiUrl(API_ENDPOINTS.USER.INFO), {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key: "GENDER",
+          value: gender,
+        }),
+      });
+
+      if (!genderResponse.ok) {
+        throw new Error("Failed to save gender to server");
+      }
+
+      // Fetch updated user profile to refresh completion status
+      await dispatch(fetchUserProfile());
+    } catch (error) {
+      console.error("Error saving user details:", error);
+      throw error;
+    }
+  };
+
+// Thunk for logout - clears ALL stored data and resets Redux store
 export const logoutUser = () => async (dispatch: any) => {
-  await AsyncStorage.removeItem("authToken");
-  await AsyncStorage.removeItem("authenticated");
-  await AsyncStorage.removeItem("languagePreference");
-  await AsyncStorage.removeItem("hasCompletedLanguageSelection");
-  dispatch(logout());
+  try {
+    console.log("LOGOUT - Starting complete logout process");
+
+    // Clear all AsyncStorage keys related to the app
+    const keysToRemove = [
+      "authToken",
+      "authenticated",
+      "languagePreference",
+      "hasCompletedLanguageSelection",
+      // Add any other AsyncStorage keys your app uses
+    ];
+
+    // Remove all keys in parallel for better performance
+    await Promise.all(keysToRemove.map((key) => AsyncStorage.removeItem(key)));
+
+    console.log("LOGOUT - AsyncStorage cleared");
+
+    // Reset Redux store to initial state
+    dispatch(logout());
+
+    console.log("LOGOUT - Redux store reset to initial state");
+  } catch (error) {
+    console.error("Error during logout:", error);
+    // Even if there's an error, still try to reset the store
+    dispatch(logout());
+  }
 };
 
 export default authSlice.reducer;
