@@ -129,12 +129,7 @@ export default function Onboarding() {
           </View>
         </View>
 
-        {/* Decorative Elements */}
-        <View style={styles.decorativeElements}>
-          <Text style={styles.decorativeSymbol}>🕉️</Text>
-          <Text style={styles.decorativeSymbol}>🔥</Text>
-          <Text style={styles.decorativeSymbol}>🙏</Text>
-        </View>
+
       </LinearGradient>
     </View>
   );
