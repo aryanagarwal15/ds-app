@@ -10,16 +10,16 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { saveDisclaimerAcceptance } from "../redux/auth/slice";
 import { useDispatch } from "react-redux";
+import { useAudioContext } from "../contexts/AudioContext";
 
 const { height: screenHeight } = Dimensions.get("window");
 
 // Disclaimer text in both languages
 const disclaimerLines = {
   english: [
-    "⚠️ Important Disclaimer",
-    "",
     "Namaste, dear one.",
     "Before we begin, I'd like to share",
     "a few words to guide your experience.",
@@ -61,8 +61,6 @@ const disclaimerLines = {
     "Let us begin.",
   ],
   hindi: [
-    "⚠️ महत्वपूर्ण अस्वीकरण",
-    "",
     "नमस्ते प्रिय भक्त",
     "शुरू करने से पहले, मैं कुछ बातें",
     "कहना चाहता हूँ — जो आपके अनुभव को",
@@ -113,7 +111,7 @@ const disclaimerLines = {
 interface DisclaimerSectionProps {
   onDisclaimerChange: (isAccepted: boolean) => void;
   isExpanded?: boolean;
-  language?: 'english' | 'hindi';
+  language?: "english" | "hindi";
   autoScroll?: boolean;
   scrollSpeed?: number; // milliseconds per line
   onLineChange?: (lineIndex: number, line: string) => void; // callback for voice-over sync
@@ -126,7 +124,7 @@ interface DisclaimerSectionProps {
 export default function DisclaimerSection({
   onDisclaimerChange,
   isExpanded = false,
-  language = 'english',
+  language = "english",
   autoScroll = true,
   scrollSpeed = 3000,
   onLineChange,
@@ -138,11 +136,18 @@ export default function DisclaimerSection({
   const dispatch = useDispatch();
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isManualScrolling, setIsManualScrolling] = useState(false);
   const scrollAnimatedValue = useRef(new Animated.Value(0)).current;
   const highlightAnimatedValue = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const highlightIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const highlightIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
   const scrollViewRef = useRef<ScrollView>(null);
+  const manualScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { disclaimerAudio, pauseAllAudio, resumeAllAudio } = useAudioContext();
 
   const lines = disclaimerLines[language];
   const lineHeight = 24;
@@ -151,7 +156,7 @@ export default function DisclaimerSection({
 
   // Function to scroll to the current line in full page view
   const scrollToCurrentLine = (lineIndex: number) => {
-    if (isExpanded && scrollViewRef.current) {
+    if (isExpanded && scrollViewRef.current && !isManualScrolling) {
       const scrollY = lineIndex * (lineHeight + 3); // lineHeight + marginVertical
       scrollViewRef.current.scrollTo({
         y: Math.max(0, scrollY - containerHeight / 2), // Center the line in view
@@ -178,14 +183,30 @@ export default function DisclaimerSection({
     return () => {
       stopAutoScroll();
       stopLineHighlighting();
+      if (manualScrollTimeoutRef.current) {
+        clearTimeout(manualScrollTimeoutRef.current);
+      }
     };
-  }, [autoScroll, isExpanded, scrollSpeed, enableLineHighlighting, voiceOverTimings]);
+  }, [
+    autoScroll,
+    scrollSpeed,
+    enableLineHighlighting,
+    voiceOverTimings,
+  ]);
+
+  //useeffect if isscrolling is true then start playing disclaimer audio
+  useEffect(() => {
+    if (isScrolling) {
+      disclaimerAudio.play(language);
+      setIsAudioPlaying(true);
+    }
+  }, [isScrolling]);
 
   const startAutoScroll = () => {
     if (intervalRef.current) return;
-    
+
     setIsScrolling(true);
-    
+
     // Helper function to find next non-empty line
     const findNextNonEmptyLine = (startIndex: number) => {
       let nextIndex = startIndex + 1;
@@ -194,7 +215,7 @@ export default function DisclaimerSection({
       }
       return nextIndex;
     };
-    
+
     // Simple auto-scroll for compact view (no voice-over sync)
     intervalRef.current = setInterval(() => {
       setCurrentLineIndex((prevIndex) => {
@@ -216,16 +237,15 @@ export default function DisclaimerSection({
 
   const startLineHighlighting = () => {
     if (highlightIntervalRef.current) return;
-    
+
     // Helper function to find next non-empty line
     const findNextNonEmptyLine = (startIndex: number) => {
-      let nextIndex = startIndex + 1;
+      let nextIndex = startIndex;
       while (nextIndex < lines.length && lines[nextIndex].trim() === "") {
         nextIndex++;
       }
       return nextIndex;
     };
-    
     // Use voice-over timings if provided, otherwise use fixed scroll speed
     if (voiceOverTimings && voiceOverTimings.length > 0) {
       let currentIndex = 0;
@@ -240,9 +260,7 @@ export default function DisclaimerSection({
             return;
           }
         }
-        
         const timing = voiceOverTimings[currentIndex] || scrollSpeed;
-        
         highlightIntervalRef.current = setTimeout(() => {
           setCurrentLineIndex(currentIndex);
           scrollToCurrentLine(currentIndex);
@@ -293,150 +311,139 @@ export default function DisclaimerSection({
     }
   };
 
-  const restartReading = () => {
-    stopAutoScroll();
-    stopLineHighlighting();
-    setCurrentLineIndex(0);
-    
-    // Restart based on current settings
-    if (autoScroll && !isExpanded) {
-      startAutoScroll();
-    }
-    if (enableLineHighlighting) {
-      startLineHighlighting();
+  // Handle manual scroll detection
+  const handleScroll = () => {
+    if (isExpanded) {
+      setIsManualScrolling(true);
+      
+      // Clear existing timeout
+      if (manualScrollTimeoutRef.current) {
+        clearTimeout(manualScrollTimeoutRef.current);
+      }
+      
+      // Set a timeout to re-enable automatic scrolling after user stops scrolling
+      manualScrollTimeoutRef.current = setTimeout(() => {
+        setIsManualScrolling(false);
+      }, 2000); // 2 seconds after user stops scrolling
     }
   };
 
   const handleAcceptDisclaimer = async () => {
     stopAutoScroll();
+    await pauseAllAudio();
     stopLineHighlighting();
+    setIsAudioPlaying(false);
     onDisclaimerChange(true);
     // @ts-ignore
     dispatch(saveDisclaimerAcceptance());
   };
 
+  const handlePlayPauseAudio = async () => {
+    if (isAudioPlaying) {
+      await pauseAllAudio();
+      stopAutoScroll();
+      setIsAudioPlaying(false);
+    } else {
+      await resumeAllAudio(language);
+      startAutoScroll();
+      setIsAudioPlaying(true);
+    }
+  };
+
   const renderScrollingView = () => {
-    const startIndex = Math.max(0, currentLineIndex - Math.floor(visibleLines / 2));
+    const startIndex = Math.max(
+      0,
+      currentLineIndex - Math.floor(visibleLines / 2)
+    );
     const endIndex = Math.min(lines.length, startIndex + visibleLines);
-    const visibleLinesSlice = lines.slice(startIndex, endIndex);
+    // const visibleLinesSlice = lines.slice(startIndex, endIndex);
+    const visibleLinesSlice = lines
 
     return (
       <View style={styles.scrollingContainer}>
-        {visibleLinesSlice.map((line, index) => {
-          const actualIndex = startIndex + index;
-          const isActive = actualIndex === currentLineIndex;
-          const isNearActive = Math.abs(actualIndex - currentLineIndex) <= 1;
-          
-          return (
-            <Animated.View
-              key={`${actualIndex}-${line}`}
-              style={[
-                styles.lineContainer,
-                {
-                  opacity: isNearActive ? 1 : 0.4,
-                  transform: [
-                    {
-                      scale: isActive ? 1.05 : 1,
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Text
+        {/* Pause Button */}
+        <TouchableOpacity
+          style={styles.pauseButton}
+          onPress={handlePlayPauseAudio}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={isAudioPlaying ? "pause-circle" : "play-circle"}
+            size={32}
+            color="#8B1538"
+          />
+        </TouchableOpacity>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={isExpanded}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          {visibleLinesSlice.map((line, index) => {
+            const actualIndex = startIndex + index;
+            const isActive = actualIndex === currentLineIndex;
+            const isNearActive = Math.abs(actualIndex - currentLineIndex) <= 1;
+
+            return (
+              <Animated.View
+                key={`${actualIndex}-${line}`}
+                style={[
+                  styles.lineContainer,
+                  {
+                    opacity: isNearActive ? 1 : 0.4,
+                    transform: [
+                      {
+                        scale: isActive ? 1.05 : 1,
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text
                   style={[
                     styles.lyricsText,
                     {
-                      color: isActive ? '#FFD700' : '#2C1810',
-                      fontWeight: isActive ? 'bold' : '600',
+                      color: isActive ? "#FFD700" : "#2C1810",
+                      fontWeight: isActive ? "bold" : "600",
                       ...Platform.select({
                         ios: {
-                          textShadowColor: isActive ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255, 255, 255, 0.3)',
-                          textShadowOffset: isActive ? { width: 0, height: 0 } : { width: 1, height: 1 },
+                          textShadowColor: isActive
+                            ? "rgba(255, 215, 0, 0.8)"
+                            : "rgba(255, 255, 255, 0.3)",
+                          textShadowOffset: isActive
+                            ? { width: 0, height: 0 }
+                            : { width: 1, height: 1 },
                           textShadowRadius: isActive ? 8 : 2,
                         },
                         android: {
-                          textShadowColor: isActive ? 'rgba(255, 215, 0, 0.6)' : 'rgba(255, 255, 255, 0.2)',
+                          textShadowColor: isActive
+                            ? "rgba(255, 215, 0, 0.6)"
+                            : "rgba(255, 255, 255, 0.2)",
                           textShadowOffset: { width: 1, height: 1 },
                           textShadowRadius: isActive ? 4 : 1,
                         },
                       }),
                     },
                   ]}
-              >
-                {line}
-              </Text>
-            </Animated.View>
-          );
-        })}
-      </View>
-    );
-  };
-
-  const renderFullView = () => {
-    return (
-      <View style={styles.fullContainer}>
-        {/* <Text style={styles.disclaimerTitle}>⚠️ {language === 'hindi' ? 'महत्वपूर्ण अस्वीकरण' : 'Important Disclaimer'}</Text> */}
-        
-        <View style={styles.fullContentContainer}>
-          <ScrollView 
-            ref={scrollViewRef}
-            showsVerticalScrollIndicator={false}
-          >
-            {lines.map((line, index) => {
-              if (line === "" || index === 0) return <View key={index} style={styles.spacer} />;
-              
-              const isActive = index === currentLineIndex;
-              
-              return (
-                <Animated.View
-                  key={index}
-                  style={[
-                    styles.fullLineContainer,
-                    {
-                      transform: [
-                        {
-                          scale: isActive ? 1.02 : 1,
-                        },
-                      ],
-                    },
-                  ]}
                 >
-                  <Text
-                    style={[
-                      styles.fullLyricsText,
-                      {
-                        color: isActive ? '#8B1538' : '#2C1810',
-                        fontWeight: isActive ? 'bold' : '500',
-                        ...Platform.select({
-                          ios: {
-                            textShadowColor: isActive ? 'rgba(255, 215, 0, 0.6)' : 'transparent',
-                            textShadowOffset: isActive ? { width: 0, height: 0 } : { width: 0, height: 0 },
-                            textShadowRadius: isActive ? 4 : 0,
-                          },
-                          android: {
-                            textShadowColor: isActive ? 'rgba(255, 215, 0, 0.4)' : 'transparent',
-                            textShadowOffset: { width: 1, height: 1 },
-                            textShadowRadius: isActive ? 2 : 0,
-                          },
-                        }),
-                      },
-                    ]}
-                  >
-                    {line}
-                  </Text>
-                </Animated.View>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        <View style={styles.buttonContainer}>
+                  {line}
+                </Text>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+        <View
+          style={[
+            styles.buttonContainer,
+            { display: isExpanded ? "flex" : "none" },
+          ]}
+        >
           <TouchableOpacity
             style={styles.button}
             onPress={handleAcceptDisclaimer}
           >
             <Text style={styles.buttonText}>
-              {language === 'hindi' ? 'स्वीकार करें' : 'Accept'}
+              {language === "hindi" ? "स्वीकार करें" : "Let's Begin"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -446,14 +453,7 @@ export default function DisclaimerSection({
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["rgba(255, 215, 0, 0.3)", "rgba(255, 140, 0, 0.4)", "rgba(255, 107, 0, 0.5)", "rgba(139, 21, 56, 0.6)"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {isExpanded ? renderFullView() : renderScrollingView()}
-      </LinearGradient>
+      <View style={styles.gradientBackground}>{renderScrollingView()}</View>
     </View>
   );
 }
@@ -465,9 +465,7 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    padding: 20,
-    borderRadius: 20,
-    margin: 10,
+
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -480,9 +478,28 @@ const styles = StyleSheet.create({
   // Scrolling view styles (25% height)
   scrollingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pauseButton: {
+    position: "absolute",
+    left: 10,
+    bottom: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   lineContainer: {
     marginVertical: 3,
@@ -490,15 +507,35 @@ const styles = StyleSheet.create({
   },
   lyricsText: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 28,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontWeight: "600",
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
   },
   // Full view styles (100% height)
   fullContainer: {
     flex: 1,
     paddingVertical: 15,
+  },
+  fullPauseButton: {
+    position: "absolute",
+    top: 15,
+    right: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 25,
+    padding: 10,
+    zIndex: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   disclaimerTitle: {
     fontSize: 24,
@@ -506,7 +543,7 @@ const styles = StyleSheet.create({
     color: "#2C1810",
     textAlign: "center",
     marginBottom: 25,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
     ...Platform.select({
       ios: {
         textShadowColor: "rgba(255, 215, 0, 0.3)",
@@ -523,7 +560,7 @@ const styles = StyleSheet.create({
   fullContentContainer: {
     flex: 1,
     paddingHorizontal: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 15,
     marginHorizontal: 5,
     ...Platform.select({
@@ -545,9 +582,9 @@ const styles = StyleSheet.create({
   fullLyricsText: {
     fontSize: 16,
     lineHeight: 24,
-    textAlign: 'left',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: '500',
+    textAlign: "left",
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+    fontWeight: "500",
   },
   spacer: {
     height: 10,
@@ -581,7 +618,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 18,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
     ...Platform.select({
       ios: {
         textShadowColor: "rgba(0, 0, 0, 0.3)",

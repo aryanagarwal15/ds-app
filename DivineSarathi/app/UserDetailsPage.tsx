@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, StatusBar, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import DisclaimerSection from "../components/DisclaimerSection";
 import DetailsSection from "../components/DetailsSection";
+import { useAudioContext } from "../contexts/AudioContext";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,6 +23,7 @@ export default function UserDetailsPage() {
   const heightProgress = useSharedValue(0);
 
   const userProfile = useSelector((state: any) => state.auth.userProfile);
+  const { backgroundMusic } = useAudioContext();
 
   // Animated style
   const animatedStyle = useAnimatedStyle(() => {
@@ -37,6 +39,16 @@ export default function UserDetailsPage() {
       easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
   };
+
+  // Start background music when component mounts
+  useEffect(() => {
+    backgroundMusic.play();
+
+    return () => {
+      // Cleanup: stop background music when component unmounts
+      backgroundMusic.stop();
+    };
+  }, []);
 
   // Auto-navigate when complete
   React.useEffect(() => {
@@ -62,12 +74,14 @@ export default function UserDetailsPage() {
   // Check if user details are complete but disclaimer is not
   const hasUserDetails = userProfile?.completionStatus?.hasUserDetails;
   const hasDisclaimer = userProfile?.completionStatus?.hasDisclaimer;
-  // const showDisclaimerOnly = hasUserDetails && !hasDisclaimer;
-  const showDisclaimerOnly = true;
+  const showDisclaimerOnly = hasUserDetails && !hasDisclaimer;
+  // const showDisclaimerOnly = false;
 
   // Trigger animation
   React.useEffect(() => {
-    animateHeight(showDisclaimerOnly);
+    if (showDisclaimerOnly) {
+      animateHeight(showDisclaimerOnly);
+    }
   }, [showDisclaimerOnly]);
 
   return (
