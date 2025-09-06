@@ -320,18 +320,31 @@ const styles = StyleSheet.create({
   },
   languageOption: {
     borderRadius: 15,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
     borderWidth: 2,
     borderColor: "transparent",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 5,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   languageOptionSelected: {
     borderColor: "#FFD700",
-    elevation: 8,
-    shadowOpacity: 0.4,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   languageOptionGradient: {
     padding: 20,
@@ -412,15 +425,28 @@ const styles = StyleSheet.create({
     width: width * 0.8,
     marginBottom: 25,
     borderRadius: 25,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
   continueButtonDisabled: {
-    elevation: 2,
-    shadowOpacity: 0.1,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   buttonGradient: {
     flexDirection: "row",

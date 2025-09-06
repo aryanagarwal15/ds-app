@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  StatusBar,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, StatusBar, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,7 +17,8 @@ export default function UserDetailsPage() {
   const dispatch = useDispatch();
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
-  const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState<boolean>(false);
+  const [isDisclaimerAccepted, setIsDisclaimerAccepted] =
+    useState<boolean>(false);
   const heightProgress = useSharedValue(0);
 
   const userProfile = useSelector((state: any) => state.auth.userProfile);
@@ -66,7 +62,8 @@ export default function UserDetailsPage() {
   // Check if user details are complete but disclaimer is not
   const hasUserDetails = userProfile?.completionStatus?.hasUserDetails;
   const hasDisclaimer = userProfile?.completionStatus?.hasDisclaimer;
-  const showDisclaimerOnly = hasUserDetails && !hasDisclaimer;
+  // const showDisclaimerOnly = hasUserDetails && !hasDisclaimer;
+  const showDisclaimerOnly = true;
 
   // Trigger animation
   React.useEffect(() => {
@@ -77,7 +74,7 @@ export default function UserDetailsPage() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={["#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
+        colors={["#FFD700", "#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -91,7 +88,18 @@ export default function UserDetailsPage() {
                 : styles.disclaimerContainer,
             ]}
           >
-            <DisclaimerSection onDisclaimerChange={handleDisclaimerChange} />
+            <DisclaimerSection
+              onDisclaimerChange={handleDisclaimerChange}
+              isExpanded={showDisclaimerOnly}
+              language={userProfile.language}
+              autoScroll={true}
+              scrollSpeed={3000}
+              enableLineHighlighting={true}
+              loopReading={false}
+              onReadingComplete={() =>
+                console.log("Disclaimer reading completed")
+              }
+            />
           </Animated.View>
 
           {!showDisclaimerOnly && (
@@ -117,18 +125,20 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    paddingTop: Platform.OS === "ios" ? 50 : 30,
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
   },
   contentSection: {
     flex: 1,
   },
   disclaimerContainer: {
     height: "25%",
+    marginBottom: 10,
   },
   fullDisclaimerContainer: {
     height: "100%",
   },
   detailsContainer: {
     height: "75%",
+    paddingTop: 10,
   },
 });
