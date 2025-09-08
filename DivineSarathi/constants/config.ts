@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
   // Session management
   SESSION: {
     CREATE: '/session/create',
+    LOCATION: '/session/location',
   },
   
   // User management

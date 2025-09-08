@@ -200,7 +200,6 @@ export const fetchUserProfile = () => async (dispatch: any, getState: any) => {
     });
 
     if (response.ok) {
-      
       const result = await response.json();
       console.log(result.data);
       dispatch(setUserProfile(result.data));
@@ -465,6 +464,37 @@ export const saveUserDetails =
       throw error;
     }
   };
+
+// Thunk for sending Location
+export const sendLocation = (location: string, key: string) => async (dispatch: any, getState: any) => {
+  try {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      throw new Error("No auth token available");
+    }
+    //prepare body
+    const body = {
+      callId: location,
+      key,
+    };
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.SESSION.LOCATION), {
+      method: "POST",
+      headers: {
+        ...API_CONFIG.HEADERS,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to send location to server");
+    }
+    console.log("Location sent successfully");
+  } catch (error) {
+    console.error("Error sending location:", error);
+    throw error;
+  }
+};
 
 // Thunk for logout - clears ALL stored data and resets Redux store
 export const logoutUser = () => async (dispatch: any) => {

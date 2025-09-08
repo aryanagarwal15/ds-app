@@ -11,6 +11,8 @@ import type {
   WebRTCRefs,
 } from "../types/audio";
 import InCallManager from "react-native-incall-manager";
+import { sendLocation } from "@/redux/auth/slice";
+import { store } from "@/redux/store";
 
 export const useWebRTC = (
   setConnectionState: (state: ConnectionState) => void,
@@ -247,14 +249,12 @@ export const useWebRTC = (
         offerToReceiveAudio: true,
         offerToReceiveVideo: false,
       });
-      console.log("Setting local description...");
       await peerConnection.setLocalDescription(offer);
-      console.log("Local description set successfully");
 
       // Send SDP offer to OpenAI Realtime API
       console.log("Sending SDP offer to OpenAI...");
       const response = await fetch(
-        "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01",
+        "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
         {
           method: "POST",
           headers: {
@@ -266,6 +266,8 @@ export const useWebRTC = (
         }
       );
 
+      console.log("Response:", response);
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`SDP exchange failed: ${response.status} ${errorText}`);
@@ -274,6 +276,9 @@ export const useWebRTC = (
       // Get SDP answer from OpenAI
       const answerSdp = await response.text();
       console.log("Received SDP answer from OpenAI");
+      const location = response.headers.get("Location")?.split("/").pop();
+      //send location to backend
+      await store.dispatch(sendLocation(location || "", ephemeralKey || ""));
 
       // Set remote description (answer) with error handling
       console.log("Setting remote description...");
