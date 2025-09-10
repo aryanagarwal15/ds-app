@@ -5,22 +5,27 @@ import { Ionicons } from "@expo/vector-icons";
 interface DailyStoryInterfaceProps {
   error: string | null;
   onClearError: () => void;
+  onConnectionToggle: (storyId: string) => void;
 }
 
 const DailyStoryInterface: React.FC<DailyStoryInterfaceProps> = ({
   error,
   onClearError,
+  onConnectionToggle,
 }) => {
+  const handlePress = () => {
+    onConnectionToggle("1");
+  };
   return (
     <View style={styles.backgroundContentContainer}>
-      <View style={styles.dailyStoryCard}>
+      <Pressable style={styles.dailyStoryCard} onPress={handlePress}>
         <Text style={styles.dailyStoryTitle}>Daily Story</Text>
         <Text style={styles.dailyStoryContent}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.
         </Text>
         <Text style={styles.dailyStoryReadMore}>Read More</Text>
-      </View>
+      </Pressable>
 
       {/* Error Display */}
       {error && (

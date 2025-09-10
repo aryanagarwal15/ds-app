@@ -86,11 +86,11 @@ const HomeV2: React.FC = () => {
   }, [toggleMute]);
 
   // Handle connect/disconnect
-  const handleConnectionToggle = useCallback(async () => {
+  const handleConnectionToggle = useCallback(async (storyId: string) => {
     if (connectionState === "idle" || connectionState === "error") {
       const permissionGranted = await checkPermissions();
       if (permissionGranted) {
-        await connectToRealtime();
+        await connectToRealtime(storyId);
       }
     } else {
       cleanup();
@@ -169,9 +169,15 @@ const HomeV2: React.FC = () => {
     }
   }, [response, connectionState]);
 
+
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
-      <DailyStoryInterface error={error} onClearError={() => setError(null)} />
+      <DailyStoryInterface
+
+        onConnectionToggle={handleConnectionToggle}
+        error={error}
+        onClearError={() => setError(null)}
+      />
       <KrishnaTalkInterface
         connectionState={connectionState}
         isRecording={isRecording}

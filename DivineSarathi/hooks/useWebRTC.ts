@@ -21,7 +21,7 @@ export const useWebRTC = (
   setResponse: (response: string | ((prev: string) => string)) => void,
   startRippleAnimation: () => void,
   stopRippleAnimation: () => void,
-  localStreamRef: React.MutableRefObject<MediaStream | null>
+  localStreamRef: React.MutableRefObject<MediaStream | null>,
 ) => {
   // WebRTC refs
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -69,7 +69,6 @@ export const useWebRTC = (
         case "response.created":
           console.log("Response generation started");
           setResponse("");
-          setConnectionState("speaking");
           break;
 
         case "response.audio_transcript.delta":
@@ -153,7 +152,7 @@ export const useWebRTC = (
   );
 
   // Connect to OpenAI Realtime API using WebRTC
-  const connectToRealtime = useCallback(async () => {
+  const connectToRealtime = useCallback(async (storyId: string) => {
     // Prevent multiple simultaneous connection attempts
     if (isConnectingRef.current) {
       console.log("Connection already in progress, ignoring request");
@@ -181,7 +180,8 @@ export const useWebRTC = (
 
       // Get ephemeral key from backend
       console.log("Fetching ephemeral key...");
-      const ephemeralKey = await fetchEphemeralKey();
+      console.log("Story ID:", storyId);
+      const ephemeralKey = await fetchEphemeralKey(storyId || "");
       console.log("Ephemeral key obtained");
 
       // Create RTCPeerConnection with error handling

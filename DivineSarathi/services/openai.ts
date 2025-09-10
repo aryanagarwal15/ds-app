@@ -17,7 +17,7 @@ export async function getAuthenticatedHeaders(): Promise<Record<string, string>>
   };
 }
 
-export async function fetchEphemeralKey(): Promise<string> {
+export async function fetchEphemeralKey(storyId: string): Promise<string> {
   const headers = await getAuthenticatedHeaders();
   
   const response = await fetch(
@@ -25,6 +25,7 @@ export async function fetchEphemeralKey(): Promise<string> {
     {
       method: "POST",
       headers,
+      body: JSON.stringify({ story_id: storyId }),
     }
   );
 

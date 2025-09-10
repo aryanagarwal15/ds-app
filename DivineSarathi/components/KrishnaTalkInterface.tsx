@@ -40,7 +40,7 @@ interface KrishnaTalkInterfaceProps {
   response: string;
   isMuted: boolean;
   onMuteToggle: () => void;
-  onConnectionToggle: () => void;
+  onConnectionToggle: (storyId: string) => void;
   chatTranscript: ChatMessage[];
   activeConversation: string;
 }
@@ -71,7 +71,6 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   const horizontalScrollViewRef = useRef<ScrollView>(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
-  console.log("chatTranscript", chatTranscript);
 
   // progress 0->collapsed, 1->expanded
   const expansionProgress = useDerivedValue(() => {
@@ -276,7 +275,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
                 connectionState === "listening") &&
                 styles.floatingButtonConnected,
             ]}
-            onPress={onConnectionToggle}
+            onPress={() => onConnectionToggle("")}
           >
             <Ionicons
               name={
