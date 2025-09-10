@@ -60,7 +60,7 @@ export default function Index() {
   console.log("is complete ", completionStatus?.isComplete);
   // If both language and user details are complete, go to home
   if (completionStatus?.isComplete) {
-    return <Redirect href="/Home" />;
+    return <Redirect href="/HomeV2" />;
   }
 
   // Fallback to language selection

@@ -29,6 +29,9 @@ export const useWebRTC = (
 
   // Add a ref to store the remote audio track
   const remoteAudioTrackRef = useRef<any>(null);
+  
+  // Add a ref to prevent multiple simultaneous connection attempts
+  const isConnectingRef = useRef<boolean>(false);
 
   // Handle realtime messages from OpenAI
   const handleRealtimeMessage = useCallback(
@@ -66,6 +69,7 @@ export const useWebRTC = (
         case "response.created":
           console.log("Response generation started");
           setResponse("");
+          setConnectionState("speaking");
           break;
 
         case "response.audio_transcript.delta":
@@ -150,9 +154,28 @@ export const useWebRTC = (
 
   // Connect to OpenAI Realtime API using WebRTC
   const connectToRealtime = useCallback(async () => {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnectingRef.current) {
+      console.log("Connection already in progress, ignoring request");
+      return;
+    }
+    
+    isConnectingRef.current = true;
     let peerConnection: RTCPeerConnection | null = null;
 
     try {
+      // Clean up any existing connection first
+      if (peerConnectionRef.current) {
+        console.log("Cleaning up existing connection...");
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+      
+      if (dataChannelRef.current) {
+        dataChannelRef.current.close();
+        dataChannelRef.current = null;
+      }
+
       setConnectionState("connecting");
       setError(null);
 
@@ -251,46 +274,76 @@ export const useWebRTC = (
       });
       await peerConnection.setLocalDescription(offer);
 
-      // Send SDP offer to OpenAI Realtime API
+      // Send SDP offer to OpenAI Realtime API with timeout
       console.log("Sending SDP offer to OpenAI...");
-      const response = await fetch(
-        "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
-            "Content-Type": "application/sdp",
-            "OpenAI-Beta": "realtime=v1",
-          },
-          body: offer.sdp,
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      let answerSdp: string;
+      
+      try {
+        const response = await fetch(
+          "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${ephemeralKey}`,
+              "Content-Type": "application/sdp",
+              "OpenAI-Beta": "realtime=v1",
+            },
+            body: offer.sdp,
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timeoutId);
+        
+        console.log("Response:", response);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`SDP exchange failed: ${response.status} ${errorText}`);
         }
-      );
 
-      console.log("Response:", response);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`SDP exchange failed: ${response.status} ${errorText}`);
+        // Get SDP answer from OpenAI
+        answerSdp = await response.text();
+        console.log("Received SDP answer from OpenAI");
+        const location = response.headers.get("Location")?.split("/").pop();
+        //send location to backend
+        await store.dispatch(sendLocation(location || "", ephemeralKey || ""));
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error("Connection timeout - please try again");
+        }
+        throw fetchError;
       }
-
-      // Get SDP answer from OpenAI
-      const answerSdp = await response.text();
-      console.log("Received SDP answer from OpenAI");
-      const location = response.headers.get("Location")?.split("/").pop();
-      //send location to backend
-      await store.dispatch(sendLocation(location || "", ephemeralKey || ""));
 
       // Set remote description (answer) with error handling
       console.log("Setting remote description...");
+      
+      // Check if peer connection is still valid before setting remote description
+      if (!peerConnection || peerConnection.signalingState === "closed") {
+        throw new Error("Peer connection is no longer valid");
+      }
+      
       const answer = new RTCSessionDescription({
         type: "answer",
         sdp: answerSdp,
       });
 
-      await peerConnection.setRemoteDescription(answer);
-      console.log("Remote description set successfully");
+      try {
+        await peerConnection.setRemoteDescription(answer);
+        console.log("Remote description set successfully");
+      } catch (setRemoteError) {
+        console.error("Failed to set remote description:", setRemoteError);
+        throw new Error(`Failed to set remote description: ${setRemoteError}`);
+      }
 
       console.log("WebRTC connection established successfully");
+      
+      // Reset connecting flag on success
+      isConnectingRef.current = false;
 
       // Add a small delay to ensure connection is stable
       setTimeout(() => {
@@ -330,9 +383,10 @@ export const useWebRTC = (
       setError(errorMessage);
       setConnectionState("error");
 
-      // Reset refs
+      // Reset refs and connecting flag
       peerConnectionRef.current = null;
       dataChannelRef.current = null;
+      isConnectingRef.current = false;
     }
   }, [setConnectionState, setError, setupDataChannel]);
 
@@ -340,24 +394,47 @@ export const useWebRTC = (
   const cleanup = useCallback(() => {
     console.log("Cleaning up WebRTC resources...");
 
-    // Close peer connection
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+    try {
+      // Close data channel first
+      if (dataChannelRef.current) {
+        try {
+          if (dataChannelRef.current.readyState !== 'closed') {
+            dataChannelRef.current.close();
+          }
+        } catch (err) {
+          console.warn("Error closing data channel:", err);
+        }
+        dataChannelRef.current = null;
+      }
+
+      // Close peer connection
+      if (peerConnectionRef.current) {
+        try {
+          if (peerConnectionRef.current.signalingState !== 'closed') {
+            peerConnectionRef.current.close();
+          }
+        } catch (err) {
+          console.warn("Error closing peer connection:", err);
+        }
+        peerConnectionRef.current = null;
+      }
+
+      // Stop InCallManager
+      try {
+        InCallManager.stop();
+      } catch (err) {
+        console.warn("Error stopping InCallManager:", err);
+      }
+
+      // Reset connection state and connecting flag
+      setConnectionState("idle");
+      isConnectingRef.current = false;
+      console.log("WebRTC cleanup completed");
+    } catch (err) {
+      console.error("Error during WebRTC cleanup:", err);
+      setConnectionState("idle");
+      isConnectingRef.current = false;
     }
-
-    // Close data channel
-    if (dataChannelRef.current) {
-      dataChannelRef.current.close();
-      dataChannelRef.current = null;
-    }
-
-    // Reset connection state
-    setConnectionState("idle");
-    console.log("Cleaning up WebRTC resources...");
-
-    // Stop InCallManager
-    InCallManager.stop();
   }, [setConnectionState]);
 
   return {
