@@ -93,8 +93,10 @@ const HomeV2: React.FC = () => {
       if (connectionState === "idle" || connectionState === "error") {
         const permissionGranted = await checkPermissions();
         if (permissionGranted) {
-          await connectToRealtime(storyId);
+          setActiveConversation("");
+          setChatTranscript([]);
           setIsKrishnaInterfaceOpen(true);
+          await connectToRealtime(storyId);
         }
       } else {
         cleanup();
