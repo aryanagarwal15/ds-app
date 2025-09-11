@@ -126,7 +126,7 @@ const OnboardingTransition: React.FC = () => {
         useNativeDriver: true,
       }).start(() => {
         // Navigate to Home after animation completes
-        router.replace('/Home');
+        router.replace('/HomeV2');
       });
     }, 8000);
   };

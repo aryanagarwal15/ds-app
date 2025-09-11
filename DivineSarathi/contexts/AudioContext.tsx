@@ -9,6 +9,7 @@ interface AudioContextType {
     play: () => Promise<void>;
     pause: () => Promise<void>;
     stop: () => Promise<void>;
+    setVolume: (volume: number) => Promise<void>;
   };
   
   // Disclaimer audio controls
@@ -174,6 +175,16 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   };
 
+  const setBackgroundVolume = async (volume: number) => {
+    try {
+      if (backgroundSoundRef.current) {
+        await backgroundSoundRef.current.setVolumeAsync(volume);
+      }
+    } catch (error) {
+      console.error('Error setting background music volume:', error);
+    }
+  };
+
   const pauseBackgroundMusic = async () => {
     try {
       if (backgroundSoundRef.current && backgroundMusicState.isPlaying) {
@@ -293,6 +304,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       play: playBackgroundMusic,
       pause: pauseBackgroundMusic,
       stop: stopBackgroundMusic,
+      setVolume: setBackgroundVolume,
     },
     disclaimerAudio: {
       isPlaying: disclaimerAudioState.isPlaying,

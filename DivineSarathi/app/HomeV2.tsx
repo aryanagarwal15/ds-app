@@ -8,6 +8,7 @@ import { useAnimations } from "../hooks/useAnimations";
 import { useWebRTC } from "../hooks/useWebRTC";
 import { useRecording } from "../hooks/useRecording";
 import type { ConnectionState, ChatMessage } from "../types/audio";
+import { useAudioContext } from "../contexts/AudioContext";
 
 // Import new components
 import MainInterfaceV2 from "../components/MainInterfaceV2";
@@ -30,6 +31,9 @@ const HomeV2: React.FC = () => {
   useEffect(() => {
     console.log("isKrishnaInterfaceOpen", isKrishnaInterfaceOpen);
   }, [isKrishnaInterfaceOpen]);
+
+  // Audio context for background music
+  const { backgroundMusic } = useAudioContext();
 
   // AI Connection hooks
   const {
@@ -112,6 +116,46 @@ const HomeV2: React.FC = () => {
       stopRippleAnimation,
     ]
   );
+
+  // Play background music while establishing connection; stop when connected or finished
+  useEffect(() => {
+    const syncBackgroundMusic = async () => {
+      if (
+        connectionState === "connecting" ||
+        connectionState === "connected" ||
+        connectionState === "listening" ||
+        connectionState === "speaking"
+      ) {
+        await backgroundMusic.play();
+      } else if (connectionState === "idle" || connectionState === "error") {
+        await backgroundMusic.stop();
+      }
+    };
+    syncBackgroundMusic();
+  }, [connectionState, backgroundMusic]);
+
+  // Duck background music volume during active WebRTC states
+  useEffect(() => {
+    const adjustBackgroundVolume = async () => {
+      // Default gentle volume
+      const defaultVolume = 0.1;
+      const connectingVolume = 0.02; // slightly lower while connecting
+      const activeCallVolume = 0.02; // very low when AI is connected/speaking/listening
+
+      if (connectionState === "connecting") {
+        await backgroundMusic.setVolume(connectingVolume);
+      } else if (
+        connectionState === "connected" ||
+        connectionState === "listening" ||
+        connectionState === "speaking"
+      ) {
+        await backgroundMusic.setVolume(activeCallVolume);
+      } else {
+        await backgroundMusic.setVolume(defaultVolume);
+      }
+    };
+    adjustBackgroundVolume();
+  }, [connectionState, backgroundMusic]);
 
   // Cleanup on unmount
   useEffect(() => {
