@@ -32,6 +32,12 @@ const HomeV2: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [chatTranscript, setChatTranscript] = useState<ChatMessage[]>([]);
   const [activeConversation, setActiveConversation] = useState<string>("");
+  //krishnaInterfaceOpen
+  const [isKrishnaInterfaceOpen, setIsKrishnaInterfaceOpen] = useState(false);
+
+  useEffect(() => {
+    console.log("isKrishnaInterfaceOpen", isKrishnaInterfaceOpen);
+  }, [isKrishnaInterfaceOpen]);
 
   // AI Connection hooks
   const {
@@ -86,30 +92,34 @@ const HomeV2: React.FC = () => {
   }, [toggleMute]);
 
   // Handle connect/disconnect
-  const handleConnectionToggle = useCallback(async (storyId: string) => {
-    if (connectionState === "idle" || connectionState === "error") {
-      const permissionGranted = await checkPermissions();
-      if (permissionGranted) {
-        await connectToRealtime(storyId);
+  const handleConnectionToggle = useCallback(
+    async (storyId: string) => {
+      if (connectionState === "idle" || connectionState === "error") {
+        const permissionGranted = await checkPermissions();
+        if (permissionGranted) {
+          await connectToRealtime(storyId);
+          setIsKrishnaInterfaceOpen(true);
+        }
+      } else {
+        cleanup();
+        cleanupLocalStream();
+        setIsRecording(false);
+        setTranscript("");
+        setResponse("");
+        stopPulseAnimation();
+        stopRippleAnimation();
       }
-    } else {
-      cleanup();
-      cleanupLocalStream();
-      setIsRecording(false);
-      setTranscript("");
-      setResponse("");
-      stopPulseAnimation();
-      stopRippleAnimation();
-    }
-  }, [
-    connectionState,
-    checkPermissions,
-    connectToRealtime,
-    cleanup,
-    cleanupLocalStream,
-    stopPulseAnimation,
-    stopRippleAnimation,
-  ]);
+    },
+    [
+      connectionState,
+      checkPermissions,
+      connectToRealtime,
+      cleanup,
+      cleanupLocalStream,
+      stopPulseAnimation,
+      stopRippleAnimation,
+    ]
+  );
 
   // Cleanup on unmount
   useEffect(() => {
@@ -169,7 +179,6 @@ const HomeV2: React.FC = () => {
     }
   }, [response, connectionState]);
 
-
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
       <MainInterfaceV2
@@ -187,6 +196,8 @@ const HomeV2: React.FC = () => {
         onMuteToggle={handleMuteToggle}
         onConnectionToggle={handleConnectionToggle}
         activeConversation={activeConversation}
+        isKrishnaInterfaceOpen={isKrishnaInterfaceOpen}
+        setIsKrishnaInterfaceOpen={setIsKrishnaInterfaceOpen}
       />
     </GestureHandlerRootView>
   );

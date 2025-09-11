@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
   withSpring,
+  runOnJS,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -49,6 +50,8 @@ interface KrishnaTalkInterfaceProps {
   onConnectionToggle: (storyId: string) => void;
   chatTranscript: ChatMessage[];
   activeConversation: string;
+  isKrishnaInterfaceOpen: boolean;
+  setIsKrishnaInterfaceOpen: (isOpen: boolean) => void;
 }
 
 const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
@@ -61,12 +64,24 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   onMuteToggle,
   onConnectionToggle,
   activeConversation,
+  isKrishnaInterfaceOpen,
+  setIsKrishnaInterfaceOpen,
 }) => {
   const isDragging = useSharedValue(0);
   const chatBottomMargin = useSharedValue(MIN_CHAT_HEIGHT);
   const previousTranslationY = useSharedValue(0);
   const horizontalScrollViewRef = useRef<ScrollView>(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    chatBottomMargin.value = withSpring(
+      !isKrishnaInterfaceOpen ? MAX_CHAT_HEIGHT : MIN_CHAT_HEIGHT,
+      {
+        damping: 18,
+        stiffness: 220,
+      }
+    );
+  }, [isKrishnaInterfaceOpen]);
 
   const expansionProgress = useDerivedValue(() => {
     return (
@@ -79,6 +94,10 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(scrollPosition / width);
     setActiveCarouselIndex(newIndex);
+  };
+
+  const handleKrishnaInterfaceOpen = (isOpen: boolean) => {
+    setIsKrishnaInterfaceOpen(isOpen);
   };
 
   const panGesture = Gesture.Pan()
@@ -103,6 +122,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
       const midPoint = (MIN_CHAT_HEIGHT + MAX_CHAT_HEIGHT) / 2;
       const targetHeight =
         chatBottomMargin.value > midPoint ? MAX_CHAT_HEIGHT : MIN_CHAT_HEIGHT;
+      runOnJS(handleKrishnaInterfaceOpen)(targetHeight !== MAX_CHAT_HEIGHT);
       chatBottomMargin.value = withSpring(targetHeight, {
         damping: 18,
         stiffness: 220,
