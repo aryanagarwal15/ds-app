@@ -21,8 +21,6 @@ import type { ConnectionState } from "../types/audio";
 const { width, height } = Dimensions.get("window");
 
 const MIN_CHAT_HEIGHT = 0.15 * height;
-// if screen is long then 0.95 is sceen is short then 0.85
-
 const MAX_CHAT_HEIGHT = 0.85 * height;
 const BUTTON_SIZE = 64;
 const BUTTON_GAP = 14;
@@ -32,6 +30,14 @@ const clamp = (value: number, lower: number, upper: number) => {
   "worklet";
   return Math.min(Math.max(value, lower), upper);
 };
+
+interface ChatMessage {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: number;
+  isComplete: boolean;
+}
 
 interface KrishnaTalkInterfaceProps {
   connectionState: ConnectionState;
@@ -45,15 +51,6 @@ interface KrishnaTalkInterfaceProps {
   activeConversation: string;
 }
 
-interface ChatMessage {
-  id: string;
-  sender: string;
-  message: string;
-  timestamp: number;
-  isComplete: boolean;
-}
-
-
 const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   connectionState,
   isRecording,
@@ -63,7 +60,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   isMuted,
   onMuteToggle,
   onConnectionToggle,
-  activeConversation
+  activeConversation,
 }) => {
   const isDragging = useSharedValue(0);
   const chatBottomMargin = useSharedValue(MIN_CHAT_HEIGHT);
@@ -71,8 +68,6 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   const horizontalScrollViewRef = useRef<ScrollView>(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
-
-  // progress 0->collapsed, 1->expanded
   const expansionProgress = useDerivedValue(() => {
     return (
       (chatBottomMargin.value - MIN_CHAT_HEIGHT) /
@@ -148,7 +143,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   const renderChatMessage = (
     sender: string,
     message: string,
-    isUser: boolean,
+    isUser: boolean
   ) => (
     <View style={styles.messageContainer}>
       <View
@@ -157,17 +152,18 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
           isUser ? styles.userMessageWrapper : styles.krishnaMessageWrapper,
         ]}
       >
-        <View
-          style={[
-            styles.messageBubble,
-          ]}
-        >
+        <View style={styles.messageBubble}>
           <Text style={styles.senderLabel}>{sender}</Text>
           <Text style={styles.messageText}>{message}</Text>
         </View>
       </View>
     </View>
   );
+
+  const isConnected =
+    connectionState === "connected" ||
+    connectionState === "speaking" ||
+    connectionState === "listening";
 
   return (
     <>
@@ -182,59 +178,77 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
       </GestureDetector>
 
       <Animated.View style={[styles.chatContainer, chatContainerAnimatedStyle]}>
-        <Animated.View style={[fadeOutOnExpansionStyle, { flex: 1 }]}>
-          <View style={styles.chatContentContainer}>
-            <ScrollView
-              ref={horizontalScrollViewRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={width}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              scrollEventThrottle={16}
-              onScroll={handleCarouselScroll}
-              style={styles.horizontalScrollView}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-              <View style={styles.krishnaIntroScreen}>
-                <Text style={styles.krishnaIntroText}>
-                  You are talking to Krishna Ji
-                </Text>
-                <LinearGradient
-                  colors={["#fce38a", "#f38ba8", "#f9ca24"]}
-                  style={styles.gradientButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                ></LinearGradient>
-              </View>
+        <LinearGradient
+          colors={["#FFECD2", "#FCB69F", "#FFECD2"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientBackground}
+        >
+          <Animated.View style={[fadeOutOnExpansionStyle, { flex: 1 }]}>
+            <View style={styles.chatContentContainer}>
+              <ScrollView
+                ref={horizontalScrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={width}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                scrollEventThrottle={16}
+                onScroll={handleCarouselScroll}
+                style={styles.horizontalScrollView}
+                contentContainerStyle={styles.horizontalScrollContent}
+              >
+                <View style={styles.krishnaIntroScreen}>
+                  <Text style={styles.krishnaIntroText}>
+                    You are talking to Krishna Ji
+                  </Text>
+                  <LinearGradient
+                    colors={["#D4A574", "#8B5A3C", "#D4A574"]}
+                    style={styles.gradientButton}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  />
+                </View>
 
-              <View style={styles.chatMessagesScreen}>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  nestedScrollEnabled={true}
-                >
-                  {chatTranscript.map((message) => renderChatMessage(message.sender, message.message, message.sender === "user"))}
-                  {activeConversation && renderChatMessage("Krishna Ji", activeConversation, false)}
-                </ScrollView>
-              </View>
-            </ScrollView>
+                <View style={styles.chatMessagesScreen}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
+                  >
+                    {chatTranscript.map((message) =>
+                      renderChatMessage(
+                        message.sender,
+                        message.message,
+                        message.sender === "user"
+                      )
+                    )}
+                    {activeConversation &&
+                      renderChatMessage(
+                        "Krishna Ji",
+                        activeConversation,
+                        false
+                      )}
+                  </ScrollView>
+                </View>
+              </ScrollView>
 
-            <View style={styles.carouselIndicatorContainer}>
-              <View
-                style={[
-                  styles.carouselDot,
-                  activeCarouselIndex === 0 && styles.activeCarouselDot,
-                ]}
-              />
-              <View
-                style={[
-                  styles.carouselDot,
-                  activeCarouselIndex === 1 && styles.activeCarouselDot,
-                ]}
-              />
+              <View style={styles.carouselIndicatorContainer}>
+                <View
+                  style={[
+                    styles.carouselDot,
+                    activeCarouselIndex === 0 && styles.activeCarouselDot,
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.carouselDot,
+                    activeCarouselIndex === 1 && styles.activeCarouselDot,
+                  ]}
+                />
+              </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </LinearGradient>
       </Animated.View>
 
       <View style={styles.floatingButtonsContainer}>
@@ -256,7 +270,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
             <Ionicons
               name={isMuted ? "mic-off" : "mic"}
               size={24}
-              color={isMuted ? "#ff6b6b" : "#4ecdc4"}
+              color={isMuted ? "#fff" : "#8B5A3C"}
             />
           </Pressable>
         </Animated.View>
@@ -270,29 +284,14 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
           <Pressable
             style={[
               styles.floatingButtonInner,
-              (connectionState === "connected" ||
-                connectionState === "speaking" ||
-                connectionState === "listening") &&
-                styles.floatingButtonConnected,
+              isConnected && styles.floatingButtonConnected,
             ]}
             onPress={() => onConnectionToggle("")}
           >
             <Ionicons
-              name={
-                connectionState === "connected" ||
-                connectionState === "speaking" ||
-                connectionState === "listening"
-                  ? "stop"
-                  : "play"
-              }
+              name={isConnected ? "stop" : "play"}
               size={24}
-              color={
-                connectionState === "connected" ||
-                connectionState === "speaking" ||
-                connectionState === "listening"
-                  ? "#ff6b6b"
-                  : "#4ecdc4"
-              }
+              color={isConnected ? "#fff" : "#8B5A3C"}
             />
           </Pressable>
         </Animated.View>
@@ -308,11 +307,16 @@ const styles = StyleSheet.create({
     zIndex: 2,
     left: 0,
     right: 0,
-    backgroundColor: "#0f0",
     maxHeight: 0.95 * height,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     bottom: 0,
+    overflow: "hidden",
+  },
+  gradientBackground: {
+    flex: 1,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
   },
   dragIndicatorContainer: {
     flex: 1,
@@ -357,10 +361,13 @@ const styles = StyleSheet.create({
   },
   krishnaIntroText: {
     textAlign: "center",
-    color: "#222",
+    color: "#8B5A3C",
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 32,
+    textShadowColor: "rgba(255, 255, 255, 0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   gradientButton: {
     width: 280,
@@ -368,6 +375,14 @@ const styles = StyleSheet.create({
     borderRadius: 140,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   chatMessagesScreen: {
     width: width,
@@ -387,39 +402,46 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   messageBubble: {
-    backgroundColor: "#f8b4b8",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     maxWidth: "80%",
-  },
-  messageBubbleWithBorder: {
-    borderWidth: 2,
-    borderColor: "#4a90e2",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   senderLabel: {
     fontSize: 10,
     fontWeight: "bold",
-    color: "#666",
+    color: "#8B5A3C",
     marginBottom: 2,
   },
   messageText: {
-    color: "#333",
+    color: "#2C2C2C",
+    fontSize: 14,
+    lineHeight: 18,
   },
   carouselIndicatorContainer: {
     flexDirection: "row",
     justifyContent: "center",
     top: 0,
+    marginTop: 32,
   },
   carouselDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#ccc",
+    backgroundColor: "rgba(139, 90, 60, 0.3)",
     marginHorizontal: 5,
   },
   activeCarouselDot: {
-    backgroundColor: "#000",
+    backgroundColor: "#8B5A3C",
   },
   floatingButtonsContainer: {
     position: "absolute",
@@ -449,14 +471,22 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f29ca3",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: BUTTON_SIZE / 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   floatingButtonConnected: {
-    backgroundColor: "rgba(78, 205, 196, 0.8)",
+    backgroundColor: "rgba(139, 90, 60, 0.9)",
   },
   floatingButtonMuted: {
-    backgroundColor: "rgba(255, 107, 107, 0.8)",
+    backgroundColor: "rgba(220, 85, 85, 0.9)",
   },
 });
 

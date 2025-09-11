@@ -62,6 +62,12 @@ export const API_ENDPOINTS = {
     CREATE: '/consent/create',
   },
   
+  // Stories management
+  STORIES: {
+    GET_ALL_CATEGORIES: '/stories/getAllCategories',
+    GET_INITIAL_STORIES: '/stories/getInitialStories',
+  },
+  
   // Add more endpoints as needed
 } as const;
 

@@ -10,7 +10,7 @@ import { useRecording } from "../hooks/useRecording";
 import type { ConnectionState } from "../types/audio";
 
 // Import new components
-import DailyStoryInterface from "../components/DailyStoryInterface";
+import MainInterfaceV2 from "../components/MainInterfaceV2";
 import KrishnaTalkInterface from "../components/KrishnaTalkInterface";
 
 interface ChatMessage {
@@ -172,8 +172,7 @@ const HomeV2: React.FC = () => {
 
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
-      <DailyStoryInterface
-
+      <MainInterfaceV2
         onConnectionToggle={handleConnectionToggle}
         error={error}
         onClearError={() => setError(null)}
