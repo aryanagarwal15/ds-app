@@ -13,6 +13,14 @@ export interface DataChannelMessage {
   delta?: any;
 }
 
+export interface ChatMessage {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: number;
+  isComplete: boolean;
+}
+
 export interface WebRTCRefs {
   peerConnectionRef: React.MutableRefObject<RTCPeerConnection | null>;
   localStreamRef: React.MutableRefObject<MediaStream | null>;

@@ -7,19 +7,11 @@ import { usePermissions } from "../hooks/usePermissions";
 import { useAnimations } from "../hooks/useAnimations";
 import { useWebRTC } from "../hooks/useWebRTC";
 import { useRecording } from "../hooks/useRecording";
-import type { ConnectionState } from "../types/audio";
+import type { ConnectionState, ChatMessage } from "../types/audio";
 
 // Import new components
 import MainInterfaceV2 from "../components/MainInterfaceV2";
 import KrishnaTalkInterface from "../components/KrishnaTalkInterface";
-
-interface ChatMessage {
-  id: string;
-  sender: string;
-  message: string;
-  timestamp: number;
-  isComplete: boolean;
-}
 
 const HomeV2: React.FC = () => {
   // AI Connection state
@@ -132,19 +124,7 @@ const HomeV2: React.FC = () => {
   }, [cleanup, cleanupLocalStream, stopPulseAnimation, stopRippleAnimation]);
 
   useEffect(() => {
-    if (transcript && connectionState === "connected") {
-      setChatTranscript([
-        ...chatTranscript,
-        {
-          id: Date.now().toString(),
-          sender: "user",
-          message: transcript,
-          timestamp: Date.now(),
-          isComplete: true,
-        },
-      ]);
-    }
-    if (connectionState === "listening") {
+    if (transcript == "...") {
       setChatTranscript([
         ...chatTranscript,
         {
@@ -155,13 +135,34 @@ const HomeV2: React.FC = () => {
           isComplete: true,
         },
       ]);
+    } else {
+      let indexToEdit = -1;
+      for (let i = chatTranscript.length - 1; i >= 0; i--) {
+        if (
+          chatTranscript[i]?.sender === "user" &&
+          chatTranscript[i]?.message === "..."
+        ) {
+          indexToEdit = i;
+          break;
+        }
+      }
+      if (indexToEdit !== -1) {
+        chatTranscript[indexToEdit].message = transcript;
+      }
     }
-  }, [transcript, connectionState]);
+  }, [transcript]);
 
   useEffect(() => {
     if (response && connectionState === "connected") {
-      //checkif last message added is not same
-      if (chatTranscript[chatTranscript.length - 1].message !== response) {
+      //checkif last message from added is not same
+      let lastResponse = "";
+      for (let i = chatTranscript.length - 1; i >= 0; i--) {
+        if (chatTranscript[i]?.sender === "Krishna Ji") {
+          lastResponse = chatTranscript[i]?.message;
+          break;
+        }
+      }
+      if (lastResponse !== response) {
         setChatTranscript([
           ...chatTranscript,
           {

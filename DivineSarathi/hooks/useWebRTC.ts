@@ -50,6 +50,7 @@ export const useWebRTC = (
         case "input_audio_buffer.speech_started":
           console.log("Speech started");
           setConnectionState("listening");
+          setTranscript("...");
           startRippleAnimation();
           break;
 
@@ -72,6 +73,7 @@ export const useWebRTC = (
           break;
 
         case "response.audio_transcript.delta":
+          setConnectionState("speaking");
           if (message.delta) {
             setResponse((prev) => prev + message.delta);
           }

@@ -73,6 +73,7 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
   const horizontalScrollViewRef = useRef<ScrollView>(null);
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
+
   useEffect(() => {
     chatBottomMargin.value = withSpring(
       !isKrishnaInterfaceOpen ? MAX_CHAT_HEIGHT : MIN_CHAT_HEIGHT,
@@ -235,19 +236,29 @@ const KrishnaTalkInterface: React.FC<KrishnaTalkInterfaceProps> = ({
                     showsVerticalScrollIndicator={false}
                     nestedScrollEnabled={true}
                   >
-                    {chatTranscript.map((message) =>
-                      renderChatMessage(
-                        message.sender,
-                        message.message,
-                        message.sender === "user"
-                      )
+                    {chatTranscript.length === 0 && !activeConversation ? (
+                      <View style={styles.emptyStateContainer}>
+                        <Text style={styles.emptyStateText}>
+                          Your chat with Krishna Ji will show here
+                        </Text>
+                      </View>
+                    ) : (
+                      <>
+                        {chatTranscript.map((message) =>
+                          renderChatMessage(
+                            message.sender,
+                            message.message,
+                            message.sender === "user"
+                          )
+                        )}
+                        {activeConversation &&
+                          renderChatMessage(
+                            "Krishna Ji",
+                            activeConversation,
+                            false
+                          )}
+                      </>
                     )}
-                    {activeConversation &&
-                      renderChatMessage(
-                        "Krishna Ji",
-                        activeConversation,
-                        false
-                      )}
                   </ScrollView>
                 </View>
               </ScrollView>
@@ -507,6 +518,18 @@ const styles = StyleSheet.create({
   },
   floatingButtonMuted: {
     backgroundColor: "rgba(220, 85, 85, 0.9)",
+  },
+  emptyStateContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 100,
+    lineHeight: 22,
   },
 });
 
