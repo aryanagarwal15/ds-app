@@ -84,5 +84,5 @@ export const API_CONFIG = {
 } as const;
 
 // Export constants for backward compatibility
-export const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = "http://10.0.2.2:3000";
 export const PROD_URL = PROD_API_URL;
