@@ -8,11 +8,13 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  StatusBar
+  StatusBar,
+  TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
-import { authenticateWithGoogle } from "../redux/auth/slice";
+import { useDispatch, useSelector } from "react-redux";
+import { authenticateWithGoogle, requestEmailOtp, verifyEmailOtp } from "../redux/auth/slice";
+import type { RootState } from "../redux/store";
 import * as WebBrowser from "expo-web-browser";
 import { buildApiUrl, API_ENDPOINTS } from "../constants/config";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +28,12 @@ export default function Onboarding() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+
+  const { otpRequestInProgress, otpVerifyInProgress } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   // Define the redirect URI for your app
   const redirectUri = "divinesarathi://auth/callback"; // Custom scheme for your app
@@ -60,6 +68,34 @@ export default function Onboarding() {
       Alert.alert("Error", "Failed to sign in with Google. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onRequestOtp = async () => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+    try {
+      // @ts-ignore
+      await dispatch(requestEmailOtp(email));
+      Alert.alert("OTP Sent", "Please check your email for the OTP");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Failed to send OTP");
+    }
+  };
+
+  const onVerifyOtp = async () => {
+    if (!email || !otp || otp.length < 4) {
+      Alert.alert("Missing Info", "Enter your email and the 6-digit OTP.");
+      return;
+    }
+    try {
+      // @ts-ignore
+      await dispatch(verifyEmailOtp(email, otp));
+      router.replace("/AuthLoading");
+    } catch (err: any) {
+      Alert.alert("Verification Failed", err?.message || "Invalid OTP");
     }
   };
 
@@ -103,21 +139,72 @@ export default function Onboarding() {
                 <Text style={styles.loadingText}>Connecting to the Divine...</Text>
               </View>
             ) : (
-              <TouchableOpacity 
-                style={styles.googleSignInButton} 
-                onPress={onGoogleSignIn}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#FFD700', '#FFA500', '#FF8C00']}
-                  style={styles.buttonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+              <>
+                <TouchableOpacity 
+                  style={styles.googleSignInButton} 
+                  onPress={onGoogleSignIn}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.googleIcon}>G</Text>
-                  <Text style={styles.buttonText}>Continue with Google</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <LinearGradient
+                    colors={['#FFD700', '#FFA500', '#FF8C00']}
+                    style={styles.buttonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={styles.googleIcon}>G</Text>
+                    <Text style={styles.buttonText}>Continue with Google</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Email OTP Login */}
+                <View style={styles.otpContainer}>
+                  <Text style={styles.otpTitle}>Or sign in with Email OTP</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Email address"
+                    placeholderTextColor="#E6D6B4"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  <View style={styles.otpRow}>
+                    <TextInput
+                      style={[styles.textInput, styles.otpInput]}
+                      placeholder="6-digit OTP"
+                      placeholderTextColor="#E6D6B4"
+                      value={otp}
+                      onChangeText={setOtp}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                    <TouchableOpacity
+                      onPress={onRequestOtp}
+                      style={styles.requestOtpButton}
+                      disabled={!!otpRequestInProgress}
+                      activeOpacity={0.8}
+                    >
+                      {otpRequestInProgress ? (
+                        <ActivityIndicator size="small" color="#8B1538" />
+                      ) : (
+                        <Text style={styles.requestOtpText}>Send OTP</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    onPress={onVerifyOtp}
+                    style={styles.verifyButton}
+                    disabled={!!otpVerifyInProgress}
+                    activeOpacity={0.8}
+                  >
+                    {otpVerifyInProgress ? (
+                      <ActivityIndicator size="small" color="#8B1538" />
+                    ) : (
+                      <Text style={styles.verifyText}>Verify & Continue</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
             
             <Text style={styles.blessingsText}>
@@ -302,4 +389,58 @@ const styles = StyleSheet.create({
     fontSize: 24,
     opacity: 0.6,
   },
+  otpContainer: {
+    width: width * 0.85,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)'
+  },
+  otpTitle: {
+    color: '#FFE4B5',
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: '600',
+    textAlign: 'center'
+  },
+  textInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+    marginBottom: 10
+  },
+  otpRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  otpInput: {
+    flex: 1,
+    marginRight: 10
+  },
+  requestOtpButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10
+  },
+  requestOtpText: {
+    color: '#8B1538',
+    fontWeight: '700'
+  },
+  verifyButton: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10
+  },
+  verifyText: {
+    color: '#8B1538',
+    fontWeight: '700'
+  }
 });

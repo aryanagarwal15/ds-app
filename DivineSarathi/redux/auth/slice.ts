@@ -27,6 +27,10 @@ interface AuthState {
     name?: string;
   } | null;
   userProfile: UserProfile | null;
+  otpEmail?: string | null;
+  otpRequestInProgress?: boolean;
+  otpVerifyInProgress?: boolean;
+  otpVerified?: boolean;
 }
 
 const initialState: AuthState = {
@@ -35,6 +39,10 @@ const initialState: AuthState = {
   token: null,
   user: null,
   userProfile: null,
+  otpEmail: null,
+  otpRequestInProgress: false,
+  otpVerifyInProgress: false,
+  otpVerified: false,
 };
 
 const authSlice = createSlice({
@@ -55,6 +63,18 @@ const authSlice = createSlice({
     },
     setUserProfile(state, action: PayloadAction<UserProfile>) {
       state.userProfile = action.payload;
+    },
+    setOtpEmail(state, action: PayloadAction<string | null>) {
+      state.otpEmail = action.payload;
+    },
+    setOtpRequestInProgress(state, action: PayloadAction<boolean>) {
+      state.otpRequestInProgress = action.payload;
+    },
+    setOtpVerifyInProgress(state, action: PayloadAction<boolean>) {
+      state.otpVerifyInProgress = action.payload;
+    },
+    setOtpVerified(state, action: PayloadAction<boolean>) {
+      state.otpVerified = action.payload;
     },
     logout(state) {
       // Reset to initial state to ensure complete cleanup
@@ -79,6 +99,10 @@ export const {
   setToken,
   setUser,
   setUserProfile,
+  setOtpEmail,
+  setOtpRequestInProgress,
+  setOtpVerifyInProgress,
+  setOtpVerified,
   logout,
   resetToInitialState,
 } = authSlice.actions;
@@ -122,6 +146,84 @@ export const authenticateWithGoogle =
       throw error;
     }
   };
+
+// Request OTP via email
+export const requestEmailOtp = (email: string) => async (dispatch: any) => {
+  try {
+    dispatch(setOtpEmail(email));
+    dispatch(setOtpRequestInProgress(true));
+
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AUTH.REQUEST_OTP),
+      {
+        method: "POST",
+        headers: API_CONFIG.HEADERS,
+        body: JSON.stringify({ email }),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(text || "Failed to request OTP");
+    }
+  } catch (error) {
+    throw error;
+  } finally {
+    dispatch(setOtpRequestInProgress(false));
+  }
+};
+
+// Verify OTP and establish session
+export const verifyEmailOtp = (email: string, otp: string) => async (dispatch: any) => {
+  try {
+    dispatch(setOtpVerifyInProgress(true));
+
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AUTH.VERIFY_OTP),
+      {
+        method: "POST",
+        headers: API_CONFIG.HEADERS,
+        body: JSON.stringify({ email, otp }),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(text || "Failed to verify OTP");
+    }
+
+    const payload = await response.json().catch(() => ({} as any));
+    const token: string | undefined = payload?.token;
+    if (!token) {
+      throw new Error("No token returned from server");
+    }
+
+    // Persist token like Google auth
+    await AsyncStorage.setItem("authToken", token);
+    await AsyncStorage.setItem("authenticated", "true");
+
+    dispatch(setToken(token));
+    dispatch(setAuthenticated(true));
+    dispatch(setOtpVerified(true));
+
+    // Attempt to load user profile
+    try {
+      await dispatch(fetchUserProfile());
+    } catch (_) {
+      // Ignore profile fetch failure
+    }
+  } catch (error) {
+    dispatch(setOtpVerified(false));
+    // Ensure we clear any partial state
+    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem("authenticated");
+    dispatch(setToken(null));
+    dispatch(setAuthenticated(false));
+    throw error;
+  } finally {
+    dispatch(setOtpVerifyInProgress(false));
+  }
+};
 
 // Thunk for setting auth and persisting to AsyncStorage (legacy)
 export const authenticate = (auth: boolean) => async (dispatch: any) => {
