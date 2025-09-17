@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../redux/store';
 
 // Helper function for opening links robustly
 const openLink = async (url: string) => {
@@ -16,6 +18,13 @@ const openLink = async (url: string) => {
 };
 
 export default function ProfileScreen() {
+  const { userProfile, user } = useSelector((s: RootState) => s.auth);
+  const displayName =
+    userProfile?.username ||
+    user?.name ||
+    (userProfile?.email ? userProfile.email.split('@')[0] : '') ||
+    'User';
+
   return (
     <View style={styles.container}>
       {/* Top Bar - Title and Icons */}
@@ -29,7 +38,7 @@ export default function ProfileScreen() {
         style={styles.avatar}
         // Replace with <View> with Icon or SVG if no profile image
       />
-      <Text style={styles.name}>Hello, Mohith</Text>
+      <Text style={styles.name}>Hello, {displayName}</Text>
 
       {/* Main Action Buttons */}
       <TouchableOpacity style={styles.ageButton} onPress={() => Alert.alert('Account Details Pressed!')}>
