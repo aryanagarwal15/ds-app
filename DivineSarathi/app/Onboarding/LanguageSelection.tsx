@@ -9,10 +9,10 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import {
   setLanguagePreferenceThunk,
@@ -105,16 +105,7 @@ export default function LanguageSelection() {
         onPress={() => handleLanguageSelect(language.code)}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={
-            isSelected
-              ? ["#FFD700", "#FFA500", "#FF8C00"]
-              : ["rgba(255, 255, 255, 0.1)", "rgba(255, 255, 255, 0.05)"]
-          }
-          style={styles.languageOptionGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={styles.languageOptionGradient}>
           <View style={styles.languageHeader}>
             <View style={styles.languageNames}>
               <Text
@@ -135,27 +126,26 @@ export default function LanguageSelection() {
               </Text>
             </View>
             {isSelected && (
-              <Ionicons name="checkmark-circle" size={24} color="#8B1538" />
+              <Ionicons name="checkmark-circle" size={40} color="#69585F" />
             )}
           </View>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <StatusBar barStyle="dark-content" backgroundColor="#FBF7EF" />
+      <View style={styles.gradientBackground}>
         {/* Sacred Om Symbol */}
         <View style={styles.headerSection}>
-          <Text style={styles.omSymbol}>ॐ</Text>
-          <Text style={styles.sanskritText}>भाषा चुनें</Text>
+          <Image
+            source={require("../../assets/images/logo_no_background.png")}
+            style={styles.logo}
+          />
+          {/* <Text style={styles.omSymbol}>ॐ</Text> */}
+          <Text style={styles.sanskritText}>डिवाइन सारथी</Text>
         </View>
 
         {/* Main Content */}
@@ -183,7 +173,7 @@ export default function LanguageSelection() {
           <View style={styles.actionSection}>
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFD700" />
+                <ActivityIndicator size="large" color="#DA8852" />
                 <Text style={styles.loadingText}>
                   Preparing your divine experience...
                 </Text>
@@ -198,16 +188,7 @@ export default function LanguageSelection() {
                 disabled={!selectedLanguage || loading}
                 activeOpacity={0.8}
               >
-                <LinearGradient
-                  colors={
-                    selectedLanguage
-                      ? ["#FFD700", "#FFA500", "#FF8C00"]
-                      : ["#666", "#555", "#444"]
-                  }
-                  style={styles.buttonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
+                <View style={styles.buttonGradient}>
                   <Text
                     style={[
                       styles.buttonText,
@@ -219,15 +200,15 @@ export default function LanguageSelection() {
                   <Ionicons
                     name="arrow-forward"
                     size={20}
-                    color={selectedLanguage ? "#8B1538" : "#999"}
+                    color={"#fff"}
                     style={styles.buttonIcon}
                   />
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             )}
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -239,28 +220,23 @@ const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
     paddingTop: Platform.OS === "ios" ? 50 : 30,
+    backgroundColor: "#FBF7EF",
   },
   headerSection: {
     alignItems: "center",
     paddingTop: 20,
     paddingBottom: 30,
   },
-  omSymbol: {
-    fontSize: 60,
-    color: "#FFD700",
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5,
-    marginBottom: 10,
+  logo: {
+    width: 88,
+    height: 88,
+    marginBottom: 16,
   },
   sanskritText: {
     fontSize: 24,
-    color: "#FFD700",
+    color: "#FFB169",
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "Roboto",
   },
   contentSection: {
     flex: 1,
@@ -275,45 +251,40 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#D9712C",
     textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 8,
     marginBottom: 8,
+    fontFamily: "Roboto",
   },
   subtitle: {
     fontSize: 16,
-    color: "#FFE4B5",
+    color: "#D9712C",
     textAlign: "center",
     fontWeight: "500",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "Roboto",
   },
   descriptionContainer: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#FDD5B010",
     borderRadius: 20,
     padding: 20,
     marginVertical: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 215, 0, 0.3)",
+    borderWidth: 2,
+    borderColor: "#FDD5B0",
   },
   description: {
     fontSize: 14,
-    color: "#FFFFFF",
+    color: "#DA8852",
     textAlign: "center",
     lineHeight: 22,
     fontWeight: "400",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    marginBottom: 10,
+    marginBottom: 16,
+    fontFamily: "Roboto",
   },
   lotusSymbol: {
     fontSize: 30,
     textAlign: "center",
+    fontFamily: "Roboto",
   },
   languageContainer: {
     flex: 1,
@@ -321,7 +292,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   languageOption: {
-    borderRadius: 15,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: "transparent",
     ...Platform.select({
@@ -334,17 +305,14 @@ const styles = StyleSheet.create({
     }),
   },
   languageOptionSelected: {
-    borderColor: "#FFD700",
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.4,
-        shadowRadius: 6,
-      },
-    }),
+    backgroundColor: "#FDD5B0",
+    borderColor: "#FF8100",
   },
   languageOptionGradient: {
     padding: 20,
-    borderRadius: 13,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: "#FDD5B0",
   },
   languageHeader: {
     flexDirection: "row",
@@ -361,19 +329,19 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#FF8100",
     marginBottom: 2,
   },
   languageNameSelected: {
-    color: "#8B1538",
+    color: "#69585F",
   },
   languageNativeName: {
     fontSize: 16,
-    color: "#FFE4B5",
+    color: "#FF8100",
     fontWeight: "500",
   },
   languageNativeNameSelected: {
-    color: "#8B1538",
+    color: "#69585F",
   },
   languageDescription: {
     fontSize: 14,
@@ -386,12 +354,14 @@ const styles = StyleSheet.create({
   },
   comingSoonContainer: {
     alignItems: "center",
+    marginTop: 16,
   },
   comingSoonText: {
-    fontSize: 12,
-    color: "#FFE4B5",
+    fontSize: 14,
+    color: "#DA8852",
     marginBottom: 8,
     fontStyle: "italic",
+    fontFamily: "Roboto",
   },
   comingSoonLanguages: {
     flexDirection: "row",
@@ -420,29 +390,14 @@ const styles = StyleSheet.create({
   continueButton: {
     width: width * 0.8,
     marginBottom: 25,
-    borderRadius: 25,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
+    borderRadius: 24,
+    backgroundColor: "#FEB989",
+    borderWidth: 2,
+    borderColor: "#F66700",
   },
   continueButtonDisabled: {
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    backgroundColor: "#69585F",
+    borderColor: "#69585F",
   },
   buttonGradient: {
     flexDirection: "row",
@@ -453,12 +408,10 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#8B1538",
-    textShadowColor: "rgba(255, 255, 255, 0.5)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    fontFamily: "Roboto",
   },
   buttonTextDisabled: {
     color: "#999",
@@ -468,17 +421,19 @@ const styles = StyleSheet.create({
   },
   blessingsText: {
     fontSize: 14,
-    color: "#FFE4B5",
+    color: "#DA8852",
     textAlign: "center",
     fontStyle: "italic",
     lineHeight: 20,
     paddingHorizontal: 20,
+    fontFamily: "Roboto",
   },
   blessingsTranslation: {
     fontSize: 12,
-    color: "#FFD700",
+    color: "#DA8852",
     fontStyle: "normal",
     fontWeight: "400",
+    fontFamily: "Roboto",
   },
   decorativeElements: {
     flexDirection: "row",

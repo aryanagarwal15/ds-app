@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, StatusBar, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient";
 import DisclaimerSection from "../../components/DisclaimerSection";
 import DetailsSection from "../../components/DetailsSection";
 import { useAudioContext } from "../../contexts/AudioContext";
@@ -87,13 +86,8 @@ export default function UserDetailsPage() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#FFD700", "#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <StatusBar barStyle="dark-content" backgroundColor="#FBF7EF" />
+      <View style={styles.gradientBackground}>
         <View style={styles.contentSection}>
           <Animated.View
             style={[
@@ -129,7 +123,7 @@ export default function UserDetailsPage() {
             </View>
           )}
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -140,6 +134,7 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
+    backgroundColor: "#FBF7EF",
     paddingTop: Platform.OS === "ios" ? 60 : 40,
   },
   contentSection: {

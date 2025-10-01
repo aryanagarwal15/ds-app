@@ -10,7 +10,6 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { saveUserAge, saveUserGender } from "../redux/auth/slice";
 
@@ -121,10 +120,7 @@ export default function DetailsSection({
             style={[
               styles.indicator,
               {
-                backgroundColor:
-                  index === currentStep
-                    ? "#FFD700"
-                    : "rgba(255, 255, 255, 0.3)",
+                backgroundColor: index === currentStep ? "#FF8100" : "#FCCFA0",
                 width: index === currentStep ? 20 : 8,
               },
             ]}
@@ -150,16 +146,7 @@ export default function DetailsSection({
         activeOpacity={0.8}
         disabled={isAgeLoading}
       >
-        <LinearGradient
-          colors={
-            isSelected
-              ? ["#FFD700", "#FFA500", "#FF8C00"]
-              : ["rgba(255, 255, 255, 0.1)", "rgba(255, 255, 255, 0.05)"]
-          }
-          style={styles.optionGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={styles.optionGradient}>
           <Text
             style={[
               styles.optionText,
@@ -170,13 +157,13 @@ export default function DetailsSection({
             {ageRange.label}
           </Text>
           {isCurrentlyLoading ? (
-            <ActivityIndicator size="small" color="#8B1538" />
+            <ActivityIndicator size="small" color="#69585F" />
           ) : (
             isSelected && (
-              <Ionicons name="checkmark-circle" size={20} color="#8B1538" />
+              <Ionicons name="checkmark-circle" size={30} color="#69585F" />
             )
           )}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -201,20 +188,11 @@ export default function DetailsSection({
         activeOpacity={0.8}
         disabled={isGenderLoading}
       >
-        <LinearGradient
-          colors={
-            isSelected
-              ? ["#FFD700", "#FFA500", "#FF8C00"]
-              : ["rgba(255, 255, 255, 0.1)", "rgba(255, 255, 255, 0.05)"]
-          }
-          style={styles.genderGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={styles.genderGradient}>
           <Ionicons
             name={gender.icon as any}
             size={24}
-            color={isSelected ? "#8B1538" : "#FFFFFF"}
+            color={isSelected ? "#69585F" : "#FF8100"}
             style={styles.genderIcon}
           />
           <Text
@@ -229,7 +207,7 @@ export default function DetailsSection({
           {isCurrentlyLoading ? (
             <ActivityIndicator
               size="small"
-              color="#8B1538"
+              color="#69585F"
               style={styles.loadingIcon}
             />
           ) : (
@@ -237,24 +215,19 @@ export default function DetailsSection({
               <Ionicons
                 name="checkmark-circle"
                 size={20}
-                color="#8B1538"
+                color="#69585F"
                 style={styles.checkIcon}
               />
             )
           )}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 215, 0, 0.1)"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <View style={styles.gradientBackground}>
         {/* Page Indicators */}
         {renderPageIndicators()}
 
@@ -282,7 +255,7 @@ export default function DetailsSection({
             >
               <View style={styles.pageContent}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>🕰️ Age Range</Text>
+                  <Text style={styles.sectionTitle}>Age Range</Text>
                   <Text style={styles.sectionSubtitle}>
                     Help us provide age-appropriate guidance
                   </Text>
@@ -299,7 +272,7 @@ export default function DetailsSection({
           <View style={[styles.pageContainer, { width: screenWidth - 40 }]}>
             <View style={styles.pageContent}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>👤 Gender</Text>
+                <Text style={styles.sectionTitle}>Gender</Text>
                 <Text style={styles.sectionSubtitle}>
                   This helps us personalize your spiritual journey
                 </Text>
@@ -311,7 +284,6 @@ export default function DetailsSection({
 
               {/* Privacy Note */}
               <View style={styles.privacyNote}>
-                <Ionicons name="shield-checkmark" size={16} color="#FFD700" />
                 <Text style={styles.privacyText}>
                   Your personal information is kept private and secure
                 </Text>
@@ -319,7 +291,7 @@ export default function DetailsSection({
             </View>
           </View>
         </ScrollView>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -332,6 +304,7 @@ const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#FBF1E5",
   },
   indicatorContainer: {
     flexDirection: "row",
@@ -380,72 +353,48 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#D9712C",
     textAlign: "center",
     marginBottom: 5,
-    ...Platform.select({
-      ios: {
-        textShadowColor: "rgba(0, 0, 0, 0.5)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
-      },
-      android: {
-        textShadowColor: "rgba(0, 0, 0, 0.3)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
-      },
-    }),
+    fontFamily: "Roboto",
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: "#FFE4B5",
+    color: "#D9712C",
     textAlign: "center",
     fontWeight: "400",
+    fontFamily: "Roboto",
   },
   optionsContainer: {
     gap: 10,
   },
   optionButton: {
-    borderRadius: 12,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "transparent",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-      },
-    }),
   },
   optionButtonSelected: {
-    borderColor: "#FFD700",
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    borderColor: "#FF8100",
+    backgroundColor: "#FDD5B0",
   },
   optionGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 15,
-    borderRadius: 11,
+    borderRadius: 24,
+    borderColor: "#FDD5B0",
+    borderWidth: 2,
   },
   optionText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#FFFFFF",
+    color: "#FF8100",
   },
   optionTextSelected: {
-    color: "#8B1538",
+    color: "#69585F",
     fontWeight: "bold",
   },
   optionButtonDisabled: {
@@ -461,35 +410,20 @@ const styles = StyleSheet.create({
   },
   genderButton: {
     flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-      }
-    }),
+    borderRadius: 24,
+    
   },
   genderButtonSelected: {
-    borderColor: "#FFD700",
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    borderColor: "#FF8100",
+    backgroundColor: "#FDD5B0",
   },
   genderGradient: {
     alignItems: "center",
     justifyContent: "center",
     padding: 15,
-    borderRadius: 11,
+    borderRadius: 24,
+    borderColor: "#FF8100",
+    borderWidth: 2,
     minHeight: 80,
     position: "relative",
   },
@@ -499,11 +433,11 @@ const styles = StyleSheet.create({
   genderText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#FFFFFF",
+    color: "#FF8100",
     textAlign: "center",
   },
   genderTextSelected: {
-    color: "#8B1538",
+    color: "#69585F",
     fontWeight: "bold",
   },
   genderButtonDisabled: {
@@ -534,7 +468,7 @@ const styles = StyleSheet.create({
   },
   privacyText: {
     fontSize: 12,
-    color: "#FFE4B5",
+    color: "#FF8100",
     fontStyle: "italic",
     textAlign: "center",
     flex: 1,

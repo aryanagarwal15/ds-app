@@ -145,7 +145,9 @@ export default function DisclaimerSection({
     null
   );
   const scrollViewRef = useRef<ScrollView>(null);
-  const manualScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const manualScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const { disclaimerAudio, pauseAllAudio, resumeAllAudio } = useAudioContext();
 
@@ -187,12 +189,7 @@ export default function DisclaimerSection({
         clearTimeout(manualScrollTimeoutRef.current);
       }
     };
-  }, [
-    autoScroll,
-    scrollSpeed,
-    enableLineHighlighting,
-    voiceOverTimings,
-  ]);
+  }, [autoScroll, scrollSpeed, enableLineHighlighting, voiceOverTimings]);
 
   //useeffect if isscrolling is true then start playing disclaimer audio
   useEffect(() => {
@@ -315,12 +312,12 @@ export default function DisclaimerSection({
   const handleScroll = () => {
     if (isExpanded) {
       setIsManualScrolling(true);
-      
+
       // Clear existing timeout
       if (manualScrollTimeoutRef.current) {
         clearTimeout(manualScrollTimeoutRef.current);
       }
-      
+
       // Set a timeout to re-enable automatic scrolling after user stops scrolling
       manualScrollTimeoutRef.current = setTimeout(() => {
         setIsManualScrolling(false);
@@ -357,7 +354,7 @@ export default function DisclaimerSection({
     );
     const endIndex = Math.min(lines.length, startIndex + visibleLines);
     // const visibleLinesSlice = lines.slice(startIndex, endIndex);
-    const visibleLinesSlice = lines
+    const visibleLinesSlice = lines;
 
     return (
       <View style={styles.scrollingContainer}>
@@ -403,26 +400,8 @@ export default function DisclaimerSection({
                   style={[
                     styles.lyricsText,
                     {
-                      color: isActive ? "#FFD700" : "#2C1810",
+                      color: isActive ? "#FEB989" : "#2C1810",
                       fontWeight: isActive ? "bold" : "600",
-                      ...Platform.select({
-                        ios: {
-                          textShadowColor: isActive
-                            ? "rgba(255, 215, 0, 0.8)"
-                            : "rgba(255, 255, 255, 0.3)",
-                          textShadowOffset: isActive
-                            ? { width: 0, height: 0 }
-                            : { width: 1, height: 1 },
-                          textShadowRadius: isActive ? 8 : 2,
-                        },
-                        android: {
-                          textShadowColor: isActive
-                            ? "rgba(255, 215, 0, 0.6)"
-                            : "rgba(255, 255, 255, 0.2)",
-                          textShadowOffset: { width: 1, height: 1 },
-                          textShadowRadius: isActive ? 4 : 1,
-                        },
-                      }),
                     },
                   ]}
                 >
@@ -544,18 +523,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 25,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
-    ...Platform.select({
-      ios: {
-        textShadowColor: "rgba(255, 215, 0, 0.3)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
-      },
-      android: {
-        textShadowColor: "rgba(255, 215, 0, 0.2)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
-      },
-    }),
   },
   fullContentContainer: {
     flex: 1,
@@ -563,17 +530,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 15,
     marginHorizontal: 5,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
   },
   fullLineContainer: {
     marginVertical: 4,
@@ -602,34 +558,11 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     borderWidth: 2,
     borderColor: "#FFD700",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#8B1538",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
   },
   buttonText: {
     color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 18,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
-    ...Platform.select({
-      ios: {
-        textShadowColor: "rgba(0, 0, 0, 0.3)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
-      },
-      android: {
-        textShadowColor: "rgba(0, 0, 0, 0.2)",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 1,
-      },
-    }),
   },
 });
