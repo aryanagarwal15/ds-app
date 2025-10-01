@@ -79,7 +79,7 @@ const Profile: React.FC = () => {
 
   const handleEditProfile = () => {
     // Navigate to UserDetailsPage for editing
-    router.push("/UserDetailsPage");
+    router.push("/Onboarding/UserDetailsPage");
   };
 
   const handleGoBack = () => {

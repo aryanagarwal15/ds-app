@@ -1,26 +1,26 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  StyleSheet, 
-  Text, 
-  Alert, 
-  ActivityIndicator, 
+import {
+  View,
+  StyleSheet,
+  Text,
+  Alert,
+  ActivityIndicator,
   Platform,
   TouchableOpacity,
   Dimensions,
-  StatusBar
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
-import { authenticateWithGoogle } from "../redux/auth/slice";
+import { authenticateWithGoogle } from "../../redux/auth/slice";
 import * as WebBrowser from "expo-web-browser";
-import { buildApiUrl, API_ENDPOINTS } from "../constants/config";
-import { LinearGradient } from 'expo-linear-gradient';
+import { buildApiUrl, API_ENDPOINTS } from "../../constants/config";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Complete WebBrowser auth session when the auth flow is done
 WebBrowser.maybeCompleteAuthSession();
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function Onboarding() {
   const router = useRouter();
@@ -34,16 +34,21 @@ export default function Onboarding() {
     setLoading(true);
     try {
       // Use your server's Google OAuth endpoint with platform parameter
-      const authUrl = `${buildApiUrl(API_ENDPOINTS.AUTH.GOOGLE)}?platform=mobile`;
-      
+      const authUrl = `${buildApiUrl(
+        API_ENDPOINTS.AUTH.GOOGLE
+      )}?platform=mobile`;
+
       // Open the auth URL which will handle the entire OAuth flow on your server
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-      
+      const result = await WebBrowser.openAuthSessionAsync(
+        authUrl,
+        redirectUri
+      );
+
       if (result.type === "success") {
         // Extract token from the redirect URL
         const url = new URL(result.url);
         const token = url.searchParams.get("token");
-        
+
         if (token) {
           // @ts-ignore
           dispatch(authenticateWithGoogle(token));
@@ -67,7 +72,7 @@ export default function Onboarding() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={['#FF8A00', '#FF6B00', '#E74C3C', '#8B1538']}
+        colors={["#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -87,11 +92,11 @@ export default function Onboarding() {
 
           <View style={styles.descriptionContainer}>
             <Text style={styles.description}>
-              Connect with Lord Krishna{'\n'}
-              Seek guidance, find peace, and strengthen your faith{'\n'}
+              Connect with Lord Krishna{"\n"}
+              Seek guidance, find peace, and strengthen your faith{"\n"}
               through divine conversations
             </Text>
-            
+
             {/* Lotus Symbol */}
             <Text style={styles.lotusSymbol}>🪷</Text>
           </View>
@@ -100,36 +105,45 @@ export default function Onboarding() {
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#FFD700" />
-                <Text style={styles.loadingText}>Connecting to the Divine...</Text>
+                <Text style={styles.loadingText}>
+                  Connecting to the Divine...
+                </Text>
               </View>
             ) : (
-              <TouchableOpacity 
-                style={styles.googleSignInButton} 
-                onPress={onGoogleSignIn}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#FFD700', '#FFA500', '#FF8C00']}
-                  style={styles.buttonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+              <>
+                <TouchableOpacity
+                  style={styles.googleSignInButton}
+                  onPress={onGoogleSignIn}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.googleIcon}>G</Text>
-                  <Text style={styles.buttonText}>Continue with Google</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <LinearGradient
+                    colors={["#FFD700", "#FFA500", "#FF8C00"]}
+                    style={styles.buttonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={styles.googleIcon}>G</Text>
+                    <Text style={styles.buttonText}>Continue with Google</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.alternateLoginButton}
+                  onPress={() => router.push("/Onboarding/EmailLogin")}
+                >
+                  <Text style={styles.alternateLoginText}>
+                    Continue with Email
+                  </Text>
+                </TouchableOpacity>
+              </>
             )}
-            
+
             <Text style={styles.blessingsText}>
-              "सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः"{'\n'}
               <Text style={styles.blessingsTranslation}>
                 May all beings be happy and free from illness
               </Text>
             </Text>
           </View>
         </View>
-
-
       </LinearGradient>
     </View>
   );
@@ -141,106 +155,106 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingTop: Platform.OS === "ios" ? 50 : 30,
   },
   headerSection: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 20,
     paddingBottom: 30,
   },
   omSymbol: {
     fontSize: 60,
-    color: '#FFD700',
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    color: "#FFD700",
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 5,
     marginBottom: 10,
   },
   sanskritText: {
     fontSize: 24,
-    color: '#FFD700',
-    fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    color: "#FFD700",
+    fontWeight: "600",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
   contentSection: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingHorizontal: 30,
     paddingVertical: 20,
   },
   titleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   mainTitle: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 8,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#FFE4B5',
-    textAlign: 'center',
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    color: "#FFE4B5",
+    textAlign: "center",
+    fontWeight: "500",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
   descriptionContainer: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 20,
     padding: 25,
     marginVertical: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: "rgba(255, 215, 0, 0.3)",
   },
   description: {
     fontSize: 16,
-    color: '#FFFFFF',
-    textAlign: 'center',
+    color: "#FFFFFF",
+    textAlign: "center",
     lineHeight: 24,
-    fontWeight: '400',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    fontWeight: "400",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
     marginBottom: 15,
   },
   lotusSymbol: {
     fontSize: 40,
-    textAlign: 'center',
+    textAlign: "center",
   },
   authSection: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadingContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 20,
   },
   loadingText: {
     fontSize: 16,
-    color: '#FFD700',
+    color: "#FFD700",
     marginTop: 15,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    fontWeight: "500",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
   googleSignInButton: {
     width: width * 0.8,
-    marginBottom: 30,
+    marginBottom: 16,
     borderRadius: 25,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -251,55 +265,66 @@ const styles = StyleSheet.create({
     }),
   },
   buttonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
   },
   googleIcon: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#8B1538',
+    fontWeight: "bold",
+    color: "#8B1538",
     marginRight: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 15,
     width: 30,
     height: 30,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 30,
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#8B1538',
-    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    fontWeight: "600",
+    color: "#8B1538",
+    textShadowColor: "rgba(255, 255, 255, 0.5)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   blessingsText: {
     fontSize: 14,
-    color: '#FFE4B5',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    color: "#FFE4B5",
+    textAlign: "center",
+    fontStyle: "italic",
     lineHeight: 20,
     paddingHorizontal: 20,
   },
   blessingsTranslation: {
     fontSize: 12,
-    color: '#FFD700',
-    fontStyle: 'normal',
-    fontWeight: '400',
+    color: "#FFD700",
+    fontStyle: "normal",
+    fontWeight: "400",
   },
   decorativeElements: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingVertical: 20,
     paddingHorizontal: 40,
   },
   decorativeSymbol: {
     fontSize: 24,
     opacity: 0.6,
+  },
+  alternateLoginButton: {
+    width: width * 0.8,
+    marginBottom: 15,
+    borderRadius: 25,
+  },
+  alternateLoginText: {
+    fontSize: 16,
+    color: "#000",
+    textAlign: "center",
+    fontWeight: "500",
   },
 });

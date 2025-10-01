@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     GOOGLE: '/auth/google/app',
     CHECK: '/auth/check',
+    EMAIL_SEND_OTP: '/auth/email/sendOtp',
+    EMAIL_VERIFY_OTP: '/auth/email/verify-otp',
   },
   
   // Session management

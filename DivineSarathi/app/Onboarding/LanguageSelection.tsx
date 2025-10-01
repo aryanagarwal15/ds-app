@@ -14,8 +14,11 @@ import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { setLanguagePreferenceThunk, fetchUserProfile } from "../redux/auth/slice";
-import { RootState } from "../redux/store";
+import {
+  setLanguagePreferenceThunk,
+  fetchUserProfile,
+} from "../../redux/auth/slice";
+import { RootState } from "../../redux/store";
 import { useEffect } from "react";
 
 const { width, height } = Dimensions.get("window");
@@ -24,7 +27,6 @@ interface LanguageOption {
   code: string;
   name: string;
   nativeName: string;
-
 }
 
 const languages: LanguageOption[] = [
@@ -72,7 +74,7 @@ export default function LanguageSelection() {
       // Save language preference to server and local storage
       // @ts-ignore
       await dispatch(setLanguagePreferenceThunk(selectedLanguage));
-      
+
       // Fetch updated user profile to get latest completion status
       // @ts-ignore
       const updatedProfile = await dispatch(fetchUserProfile());
@@ -329,9 +331,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 5,
       },
-      android: {
-        elevation: 6,
-      },
     }),
   },
   languageOptionSelected: {
@@ -340,9 +339,6 @@ const styles = StyleSheet.create({
       ios: {
         shadowOpacity: 0.4,
         shadowRadius: 6,
-      },
-      android: {
-        elevation: 8,
       },
     }),
   },

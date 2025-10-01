@@ -30,7 +30,7 @@ export default function AuthLoading() {
 
       // If no language selected, go to language selection
       if (!completionStatus?.hasLanguage) {
-        router.replace("/LanguageSelection");
+        router.replace("/Onboarding/LanguageSelection");
         return;
       }
 
@@ -39,7 +39,7 @@ export default function AuthLoading() {
         completionStatus?.hasLanguage &&
         (!completionStatus?.hasUserDetails || !completionStatus?.hasDisclaimer)
       ) {
-        router.replace("/UserDetailsPage"); 
+        router.replace("/Onboarding/UserDetailsPage"); 
         return;
       }
 
@@ -49,7 +49,7 @@ export default function AuthLoading() {
         return;
       }
 
-      router.replace("/LanguageSelection");
+      router.replace("/Onboarding/LanguageSelection");
     }
   }, [userProfile]);
 

@@ -47,7 +47,7 @@ export default function Index() {
 
   // If no language selected, go to language selection
   if (!completionStatus?.hasLanguage) {
-    return <Redirect href="/LanguageSelection" />;
+    return <Redirect href="/Onboarding/LanguageSelection" />;
   }
 
   // If language selected but no user details (age/gender), go to user details
@@ -55,7 +55,7 @@ export default function Index() {
     completionStatus?.hasLanguage &&
     (!completionStatus?.hasUserDetails || !completionStatus?.hasDisclaimer)
   ) {
-    return <Redirect href="/UserDetailsPage" />;
+    return <Redirect href="/Onboarding/UserDetailsPage" />;
   }
   console.log("is complete ", completionStatus?.isComplete);
   // If both language and user details are complete, go to home
@@ -64,5 +64,5 @@ export default function Index() {
   }
 
   // Fallback to language selection
-  return <Redirect href="/LanguageSelection" />;
+  return <Redirect href="/Onboarding/LanguageSelection" />;
 }

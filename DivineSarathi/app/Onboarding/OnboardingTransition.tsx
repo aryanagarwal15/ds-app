@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useAudioContext } from '../contexts/AudioContext';
+import { useAudioContext } from '../../contexts/AudioContext';
 
 const { width, height } = Dimensions.get('window');
 

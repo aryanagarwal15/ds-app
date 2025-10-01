@@ -3,9 +3,9 @@ import { View, StyleSheet, StatusBar, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
-import DisclaimerSection from "../components/DisclaimerSection";
-import DetailsSection from "../components/DetailsSection";
-import { useAudioContext } from "../contexts/AudioContext";
+import DisclaimerSection from "../../components/DisclaimerSection";
+import DetailsSection from "../../components/DetailsSection";
+import { useAudioContext } from "../../contexts/AudioContext";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -69,7 +69,7 @@ export default function UserDetailsPage() {
 
   const handleDisclaimerChange = (isAccepted: boolean) => {
     setIsDisclaimerAccepted(isAccepted);
-    router.replace("/OnboardingTransition");
+    router.replace("/Onboarding/OnboardingTransition");
   };
 
   // Check if user details are complete but disclaimer is not
