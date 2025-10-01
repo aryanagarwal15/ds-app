@@ -10,6 +10,7 @@ import {
   Dimensions,
   StatusBar,
   TextInput,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
@@ -135,25 +136,23 @@ export default function EmailLogin() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#FF8A00", "#FF6B00", "#E74C3C", "#8B1538"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <StatusBar barStyle="dark-content" backgroundColor="#FBF7EF" />
+      <View style={styles.gradientBackground}>
         {/* Back Button */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBack}
           activeOpacity={0.8}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFD700" />
+          <Ionicons name="arrow-back" size={24} color="#FF8100" />
         </TouchableOpacity>
 
         {/* Sacred Om Symbol */}
         <View style={styles.headerSection}>
-          <Text style={styles.omSymbol}>ॐ</Text>
+          <Image
+            source={require("../../assets/images/logo_no_background.png")}
+            style={styles.logo}
+          />
           <Text style={styles.sanskritText}>दिव्य सारथी</Text>
         </View>
 
@@ -185,13 +184,13 @@ export default function EmailLogin() {
                   <Ionicons
                     name="mail-outline"
                     size={24}
-                    color="#FFD700"
+                    color="#69585F"
                     style={styles.inputIcon}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your email"
-                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                    placeholderTextColor="#69585F"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -215,13 +214,13 @@ export default function EmailLogin() {
                   <Ionicons
                     name="key-outline"
                     size={24}
-                    color="#FFD700"
+                    color="#69585F"
                     style={styles.inputIcon}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter 6-digit OTP"
-                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                    placeholderTextColor="#69585F"
                     value={otp}
                     onChangeText={setOtp}
                     keyboardType="number-pad"
@@ -238,9 +237,6 @@ export default function EmailLogin() {
                 </TouchableOpacity>
               </View>
             )}
-
-            {/* Lotus Symbol */}
-            <Text style={styles.lotusSymbol}>🪷</Text>
           </View>
 
           <View style={styles.authSection}>
@@ -257,22 +253,17 @@ export default function EmailLogin() {
                 onPress={step === "email" ? handleSendOtp : handleVerifyOtp}
                 activeOpacity={0.8}
               >
-                <LinearGradient
-                  colors={["#FFD700", "#FFA500", "#FF8C00"]}
-                  style={styles.buttonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
+                <View style={styles.buttonGradient}>
                   <Text style={styles.buttonText}>
                     {step === "email" ? "Send OTP" : "Verify & Continue"}
                   </Text>
                   <Ionicons
                     name="arrow-forward"
                     size={20}
-                    color="#8B1538"
+                    color="#fff"
                     style={styles.buttonIcon}
                   />
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             )}
 
@@ -283,7 +274,7 @@ export default function EmailLogin() {
             </Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -294,11 +285,10 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    paddingTop: Platform.OS === "ios" ? 50 : 30,
+    backgroundColor: "#FBF7EF",
   },
   backButton: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 60 : 40,
     left: 20,
     padding: 8,
   },
@@ -307,22 +297,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
   },
-  omSymbol: {
-    fontSize: 60,
-    color: "#FFD700",
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5,
-    marginBottom: 10,
+  logo: {
+    width: 88,
+    height: 88,
+    marginBottom: 16,
   },
+
   sanskritText: {
     fontSize: 24,
-    color: "#FFD700",
+    color: "#FF8100",
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "Roboto",
   },
   contentSection: {
     flex: 1,
@@ -337,21 +322,17 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#D9712C",
     textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 8,
+    fontFamily: "Roboto",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#FFE4B5",
+    color: "#D9712C",
     textAlign: "center",
     fontWeight: "500",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "Roboto",
   },
   formContainer: {
     alignItems: "center",
@@ -368,15 +349,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 5,
     borderWidth: 1,
-    borderColor: "rgba(255, 215, 0, 0.3)",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 5,
-      },
-    }),
+    borderColor: "#FDD5B0",
+    backgroundColor: "#FDD5B0",
   },
   inputIcon: {
     marginRight: 10,
@@ -384,7 +358,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#FF8100",
     paddingVertical: 12,
   },
   resendButton: {
@@ -393,7 +367,7 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    color: "#FFD700",
+    color: "#FF8100",
     fontWeight: "600",
     textDecorationLine: "underline",
   },
@@ -411,28 +385,15 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: "#FFD700",
+    color: "#FF8100",
     marginTop: 15,
     fontWeight: "500",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "Roboto",
   },
   continueButton: {
     width: width * 0.8,
     marginBottom: 16,
     borderRadius: 25,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
   },
   buttonGradient: {
     flexDirection: "row",
@@ -441,21 +402,22 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
+    backgroundColor: "#FEB989",
+    borderWidth: 2,
+    borderColor: "#F38132",
   },
   buttonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#8B1538",
-    textShadowColor: "rgba(255, 255, 255, 0.5)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    color: "#fff",
+    fontFamily: "Roboto",
   },
   buttonIcon: {
     marginLeft: 10,
   },
   blessingsText: {
     fontSize: 14,
-    color: "#FFE4B5",
+    color: "#FF8100",
     textAlign: "center",
     fontStyle: "italic",
     lineHeight: 20,
@@ -463,8 +425,9 @@ const styles = StyleSheet.create({
   },
   blessingsTranslation: {
     fontSize: 12,
-    color: "#FFD700",
+    color: "#FF8100",
     fontStyle: "normal",
     fontWeight: "400",
+    fontFamily: "Roboto",
   },
 });

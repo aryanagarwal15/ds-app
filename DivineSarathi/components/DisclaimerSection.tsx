@@ -367,7 +367,7 @@ export default function DisclaimerSection({
           <Ionicons
             name={isAudioPlaying ? "pause-circle" : "play-circle"}
             size={32}
-            color="#8B1538"
+            color="#fff"
           />
         </TouchableOpacity>
         <ScrollView
@@ -464,21 +464,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 10,
     bottom: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "#FEB989",
     borderRadius: 20,
     padding: 8,
     zIndex: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
   },
   lineContainer: {
     marginVertical: 3,
@@ -552,15 +541,15 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
   },
   button: {
-    backgroundColor: "#8B1538",
+    backgroundColor: "#FEB989",
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 30,
     borderWidth: 2,
-    borderColor: "#FFD700",
+    borderColor: "#F38132",
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: "#69585F",
     fontWeight: "bold",
     fontSize: 18,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
