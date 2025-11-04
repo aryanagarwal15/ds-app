@@ -68,6 +68,7 @@ export const API_ENDPOINTS = {
   STORIES: {
     GET_ALL_CATEGORIES: '/stories/getAllCategories',
     GET_INITIAL_STORIES: '/stories/getInitialStories',
+    GET_DAILY_STORIES: '/stories/getDailyStories',
   },
   
   // Add more endpoints as needed

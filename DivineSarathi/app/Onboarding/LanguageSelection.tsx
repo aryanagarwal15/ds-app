@@ -52,7 +52,7 @@ export default function LanguageSelection() {
   // Check if user profile is complete and navigate directly to Home
   useEffect(() => {
     if (userProfile?.completionStatus?.isComplete) {
-      router.replace("/HomeV2");
+      router.replace("/HomeV2Old");
     }
   }, [userProfile, router]);
 

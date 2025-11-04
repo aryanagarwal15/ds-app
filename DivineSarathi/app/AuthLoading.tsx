@@ -45,7 +45,7 @@ export default function AuthLoading() {
 
       // If both language and user details are complete, go to home
       if (completionStatus?.isComplete) {
-        router.replace("/HomeV2");
+        router.replace("/HomeV3");
         return;
       }
 

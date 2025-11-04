@@ -53,7 +53,7 @@ export default function UserDetailsPage() {
   React.useEffect(() => {
     if (userProfile.completionStatus.isComplete) {
       setTimeout(() => {
-        router.replace("/HomeV2");
+        router.replace("/HomeV3");
       }, 1500);
     }
   }, [userProfile, router]);

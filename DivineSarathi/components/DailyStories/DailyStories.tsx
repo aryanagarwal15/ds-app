@@ -1,0 +1,252 @@
+import React, { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+const { width } = Dimensions.get("window");
+const STORY_CARD_WIDTH = 220;
+const STORY_CARD_MARGIN = 16;
+const INDICATOR_COUNT = 7;
+
+type StoryStatus = "locked" | "play" | "listened";
+
+interface Story {
+  id: string;
+  title: string;
+  image: any; // require or uri
+  status: StoryStatus;
+}
+
+interface DailyStoriesProps {
+  dailyStories: Story[];
+  onStoryPress?: (story: Story) => void;
+}
+
+const DailyStories: React.FC<DailyStoriesProps> = ({
+  dailyStories,
+  onStoryPress,
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Calculate the indicator window
+  let indicatorStart = 0;
+  if (currentIndex > 5 && dailyStories.length > INDICATOR_COUNT) {
+    indicatorStart = Math.min(
+      currentIndex - 5,
+      dailyStories.length - INDICATOR_COUNT
+    );
+  }
+  const indicatorEnd = Math.min(
+    indicatorStart + INDICATOR_COUNT,
+    dailyStories.length
+  );
+
+  // For horizontal scroll
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScroll = (event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const idx = Math.round(offsetX / (STORY_CARD_WIDTH + STORY_CARD_MARGIN));
+    setCurrentIndex(idx);
+  };
+
+  const handleCardPress = (story: Story, idx: number) => {
+    if (story.status !== "locked" && onStoryPress) {
+      onStoryPress(story);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={STORY_CARD_WIDTH + STORY_CARD_MARGIN}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingHorizontal: 24 }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {dailyStories.map((story, idx) => (
+          <TouchableOpacity
+            key={story.id}
+            activeOpacity={story.status === "locked" ? 1 : 0.8}
+            onPress={() => handleCardPress(story, idx)}
+            style={[
+              styles.storyCard,
+              {
+                marginRight:
+                  idx === dailyStories.length - 1 ? 0 : STORY_CARD_MARGIN,
+              },
+            ]}
+          >
+            <Image
+              source={{ uri: story.image }}
+              style={styles.storyImage}
+              resizeMode="cover"
+            />
+            <View style={styles.titleContainer}>
+              <Text style={styles.storyTitle} numberOfLines={2}>
+                {story.title}
+              </Text>
+            </View>
+            <View style={styles.statusButtonContainer}>
+              {story.status === "locked" ? (
+                <View style={styles.statusButtonLocked}>
+                  <Ionicons name="lock-closed" size={22} color="#fff" />
+                </View>
+              ) : story.status === "listened" ? (
+                <View style={styles.statusButtonListened}>
+                  <Ionicons name="checkmark-done" size={22} color="#fff" />
+                </View>
+              ) : (
+                <View style={styles.statusButtonPlay}>
+                  <Ionicons name="play" size={22} color="#fff" />
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      {/* Tab Indicator */}
+      <View style={styles.indicatorContainer}>
+        {Array.from({
+          length: Math.min(INDICATOR_COUNT, dailyStories.length),
+        }).map((_, i) => {
+          const storyIdx = indicatorStart + i;
+          const isActive = storyIdx === currentIndex;
+          return (
+            <View
+              key={storyIdx}
+              style={[
+                styles.indicatorDot,
+                isActive && styles.activeIndicatorDot,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.indicatorText,
+                  isActive && styles.activeIndicatorText,
+                ]}
+              >
+                {storyIdx + 1}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  storyCard: {
+    width: STORY_CARD_WIDTH,
+    height: 240,
+    borderRadius: 20,
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+    marginBottom: 8,
+    position: "relative",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  storyImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+  },
+  titleContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: "100%",
+  },
+  storyTitle: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+    textShadowColor: "#000",
+    width: "75%",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  statusButtonContainer: {
+    position: "absolute",
+    right: 12,
+    bottom: 16,
+  },
+  statusButtonPlay: {
+    backgroundColor: "#FFA344",
+    borderRadius: 18,
+    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
+  },
+  statusButtonLocked: {
+    backgroundColor: "#B0B0B0",
+    borderRadius: 18,
+    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0.8,
+  },
+  statusButtonListened: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 18,
+    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  indicatorContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 12,
+    gap: 8,
+  },
+  indicatorDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E0E0E0",
+    marginHorizontal: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeIndicatorDot: {
+    backgroundColor: "#FFA344",
+  },
+  indicatorText: {
+    color: "#888",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  activeIndicatorText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 17,
+  },
+});
+
+export default DailyStories;

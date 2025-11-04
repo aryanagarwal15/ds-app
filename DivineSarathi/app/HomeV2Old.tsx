@@ -38,15 +38,11 @@ const HomeV2: React.FC = () => {
   // AI Connection hooks
   const {
     checkPermissions,
-    checkIfSimulator,
     localStreamRef,
     cleanupLocalStream,
   } = usePermissions(setError);
 
   const {
-    pulseAnim,
-    rippleAnim,
-    fadeAnim,
     startPulseAnimation,
     stopPulseAnimation,
     startRippleAnimation,
