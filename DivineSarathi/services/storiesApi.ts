@@ -14,6 +14,7 @@ export interface Story {
   full_story: string;
   verse_number: string;
   full_verse: string;
+  sub_category_2: string;
 }
 
 export interface CategoryData {
@@ -173,14 +174,14 @@ export async function fetchCategories(): Promise<ProcessedCategoriesData> {
 }
 
 /**
- * Fetch initial stories from the server
+ * Fetch stories by category from the server
  */
-export async function fetchInitialStories(): Promise<ProcessedStoriesData> {
+export async function fetchStoriesByCategory(category: string): Promise<ProcessedStoriesData> {
   try {
     const headers = await getAuthenticatedHeaders();
 
     const response: AxiosResponse<ApiResponse<Story[]>> = await axios.get(
-      buildApiUrl(API_ENDPOINTS.STORIES.GET_INITIAL_STORIES),
+      buildApiUrl(API_ENDPOINTS.STORIES.GET_STORIES + `?sub_category=${category}`),
       {
         headers,
         timeout: API_CONFIG.TIMEOUT,
@@ -189,7 +190,7 @@ export async function fetchInitialStories(): Promise<ProcessedStoriesData> {
 
     if (!response.data.success) {
       throw new StoriesApiError(
-        response.data.message || "Failed to fetch initial stories"
+        response.data.message || "Failed to fetch stories by category"
       );
     }
 
@@ -209,11 +210,10 @@ export async function fetchInitialStories(): Promise<ProcessedStoriesData> {
         continue;
       }
       stories.push(data);
-    }
-
+      }
     return { stories };
   } catch (error) {
-    console.error("Error fetching initial stories:", error);
+    console.error("Error fetching stories by category:", error);
     handleApiError(error);
   }
 }

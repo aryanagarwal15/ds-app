@@ -9,13 +9,14 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import RudhakshaLine from "../../assets/images/rudraksha_line.svg";
 
 const { width } = Dimensions.get("window");
 const STORY_CARD_WIDTH = 220;
 const STORY_CARD_MARGIN = 16;
 const INDICATOR_COUNT = 7;
 
-type StoryStatus = "locked" | "play" | "listened";
+type StoryStatus = "locked" | "play" | "listened" | "today";
 
 interface Story {
   id: string;
@@ -71,7 +72,7 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
         showsHorizontalScrollIndicator={false}
         snapToInterval={STORY_CARD_WIDTH + STORY_CARD_MARGIN}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 24 }}
+        contentContainerStyle={{ paddingHorizontal: STORY_CARD_WIDTH / 2 - 24 }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
@@ -82,6 +83,7 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
             onPress={() => handleCardPress(story, idx)}
             style={[
               styles.storyCard,
+              currentIndex === idx && styles.storyCardActive,
               {
                 marginRight:
                   idx === dailyStories.length - 1 ? 0 : STORY_CARD_MARGIN,
@@ -93,6 +95,11 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
               style={styles.storyImage}
               resizeMode="cover"
             />
+            {story.status === "today" && (
+              <View style={styles.todayStoryContainer}>
+                <Text style={styles.todayStoryText}> Today's Story</Text>
+              </View>
+            )}
             <View style={styles.titleContainer}>
               <Text style={styles.storyTitle} numberOfLines={2}>
                 {story.title}
@@ -124,21 +131,41 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
           const storyIdx = indicatorStart + i;
           const isActive = storyIdx === currentIndex;
           return (
-            <View
-              key={storyIdx}
-              style={[
-                styles.indicatorDot,
-                isActive && styles.activeIndicatorDot,
-              ]}
-            >
-              <Text
+            <View>
+              <View
+                key={storyIdx}
                 style={[
-                  styles.indicatorText,
-                  isActive && styles.activeIndicatorText,
+                  styles.indicatorDot,
+                  isActive && styles.activeIndicatorDot,
+                  storyIdx == 0 && styles.indicatorTextFirst,
                 ]}
               >
-                {storyIdx + 1}
-              </Text>
+                <Text
+                  style={[
+                    styles.indicatorText,
+                    isActive && styles.activeIndicatorText,
+                   
+                  ]}
+                >
+                  {storyIdx + 1}
+                </Text>
+              </View>
+              <View style={styles.indicatorImageContainer}>
+                {storyIdx == 0 && (
+                  <Image
+              
+                    source={require("../../assets/images/rudraksha_line.png")}
+                  />
+                )}
+                <Image
+
+                  source={require("../../assets/images/rudraksha.png")}
+                />
+                <Image
+
+                  source={require("../../assets/images/rudraksha_line.png")}
+                />
+              </View>
             </View>
           );
         })}
@@ -165,6 +192,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+    marginTop: 10,
+  },
+  storyCardActive: {
+    width: STORY_CARD_WIDTH + 20,
+    height: 240 + 20,
+    marginTop: 0,
   },
   storyImage: {
     width: "100%",
@@ -223,7 +256,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 12,
-    gap: 8,
   },
   indicatorDot: {
     width: 32,
@@ -246,6 +278,36 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 17,
+  },
+  todayStoryContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  todayStoryText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  indicatorImage: {
+    marginTop: 8,
+  },
+  indicatorImageContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  indicatorTextFirst: {
+    marginLeft: 22,
   },
 });
 

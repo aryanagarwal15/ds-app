@@ -11,7 +11,7 @@ import StorySubsection from "../Stories/StorySubsection";
 import {
   fetchCategories,
   fetchDailyStories,
-  fetchInitialStories,
+  fetchStoriesByCategory,
   Story,
 } from "@/services/storiesApi";
 import CategorySelector from "../CategorySelector/CategorySelector";
@@ -19,33 +19,50 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import DailyStories from "../DailyStories/DailyStories";
 
-const HomeTab = ({ onStoryClick }: { onStoryClick: (storyId: number, storyTitle: string) => void }) => {
-  const [categories, setCategories] = useState<string[]>([]);
+const HomeTab = ({
+  onStoryClick,
+}: {
+  onStoryClick: (storyId: number, storyTitle: string) => void;
+}) => {
   const [subCategories, setSubCategories] = useState<string[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
   const [dailyStories, setDailyStories] = useState<Story[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>();
+  const [subCategory2, setSubCategory2] = useState<{ [key: string]: Story[] }>(
+    {}
+  );
 
   useEffect(() => {
     fetchCategories().then((data) => {
-      setCategories(data.categories);
       setSubCategories(data.subCategories);
     });
   }, []);
 
   useEffect(() => {
-    fetchInitialStories().then((data) => {
-      setStories(data.stories);
-    });
     fetchDailyStories().then((data) => {
       setDailyStories(data.stories);
     });
   }, []);
 
   useEffect(() => {
+    console.log(selectedCategory);
     if (selectedCategory) {
-      fetchInitialStories().then((data) => {
-        setStories(data.stories);
+      fetchStoriesByCategory(selectedCategory).then((data) => {
+        let fetchedStories = data.stories;
+        //get all subcategory 2s in array from fetchedStories
+        let subCategory2Array = fetchedStories.map(
+          (story) => story.sub_category_2
+        );
+        // Group stories by sub_category_2 and set as an object { [subCategory2]: Story[] }
+        const subCategory2Map: { [key: string]: Story[] } = {};
+        subCategory2Array.forEach((subCat2) => {
+          if (subCat2 && !subCategory2Map[subCat2]) {
+            subCategory2Map[subCat2] = fetchedStories.filter(
+              (story) => story.sub_category_2 === subCat2
+            );
+          }
+        });
+        setSubCategory2(subCategory2Map);
+        console.log(subCategory2Map);
       });
     }
   }, [selectedCategory]);
@@ -74,7 +91,14 @@ const HomeTab = ({ onStoryClick }: { onStoryClick: (storyId: number, storyTitle:
             categories={subCategories}
             onCategorySelect={setSelectedCategory}
           />
-          <StorySubsection onStoryClick={onStoryClick} sectionTitle="" stories={stories} />
+          {Object.entries(subCategory2).map(([subCategory2, stories]) => (
+            <StorySubsection
+              key={subCategory2}
+              onStoryClick={onStoryClick}
+              sectionTitle={subCategory2}
+              stories={stories}
+            />
+          ))}
         </ScrollView>
       </View>
     </View>

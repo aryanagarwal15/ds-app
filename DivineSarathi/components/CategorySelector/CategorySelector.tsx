@@ -47,6 +47,7 @@ const CategorySelector = ({ categories, onCategorySelect }: { categories: string
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
+    marginBottom: 16,
   },
   scrollContent: {
     paddingHorizontal: 12,

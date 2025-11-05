@@ -179,7 +179,7 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
               </View>
 
               <Text style={styles.expandedStoryDescription}>
-                {"This is a sample description to showcase how this will look"}
+                {expandedStory.description}
               </Text>
             </BlurView>
             {/* Close button */}
