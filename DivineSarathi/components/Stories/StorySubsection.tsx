@@ -116,7 +116,7 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
                 tint="dark"
                 style={styles.verseContainer}
               >
-                <Text style={styles.verseText}>verse {story.verse_number}</Text>
+                <Text style={styles.verseText}>{story.verse_number}</Text>
               </BlurView>
               {/* Title overlay at bottom */}
               <LinearGradient
@@ -151,7 +151,7 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
             {/* Verse number on top right */}
             <View style={styles.expandedVerseContainer}>
               <Text style={styles.expandedVerseText}>
-                verse {expandedStory.verse_number}
+                {expandedStory.verse_number}
               </Text>
             </View>
             {/* Title overlay at bottom */}
