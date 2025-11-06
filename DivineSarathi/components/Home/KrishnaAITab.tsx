@@ -270,8 +270,10 @@ const KrishnaAITab = ({
               contentContainerStyle={styles.horizontalScrollContent}
             >
               <View style={styles.krishnaIntroScreen}>
-                {/* //add FFEFA2 color filled circle here  */}
-                <View style={styles.krishnaMainInterface}></View>
+                <Image
+                  source={require("@/assets/images/krishna.png")}
+                  style={{ width: 200, height: 200 }}
+                />
               </View>
 
               <View style={styles.chatMessagesScreen}>

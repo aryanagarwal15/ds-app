@@ -87,6 +87,7 @@ export default function HomeV3() {
         }
       } else {
         cleanup();
+        console.log("connectionState", connectionState);
         cleanupLocalStream();
         setIsRecording(false);
         setTranscript("");
@@ -110,6 +111,8 @@ export default function HomeV3() {
 
   // Play background music while establishing connection; stop when connected or finished
   useEffect(() => {
+    console.log("connectionState", connectionState);
+
     const syncBackgroundMusic = async () => {
       if (
         connectionState === "connecting" ||
@@ -123,7 +126,7 @@ export default function HomeV3() {
       }
     };
     syncBackgroundMusic();
-  }, [connectionState, backgroundMusic]);
+  }, [connectionState]);
 
   // Duck background music volume during active WebRTC states
   useEffect(() => {
@@ -146,7 +149,7 @@ export default function HomeV3() {
       }
     };
     adjustBackgroundVolume();
-  }, [connectionState, backgroundMusic]);
+  }, [connectionState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -219,17 +222,34 @@ export default function HomeV3() {
     console.log("selectedTab", selectedTab);
   }, [selectedTab]);
 
-  const handleStoryClick = (storyId: number, storyTitle: string) => {
+  const closeConnection = async () => {
     if (
       connectionState === "connected" ||
       connectionState === "speaking" ||
       connectionState === "listening"
     ) {
+      console.log("closing connection");
       handleConnectionToggle("");
+      //await for 2 sec
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
-    handleConnectionToggle(storyId.toString());
-    setStoryTitle(storyTitle);
-    setSelectedTab("chat");
+  };
+
+  const handleStoryClick = async (storyId: number, storyTitle: string) => {
+    await closeConnection();
+    console.log("closing connection done");
+    console.log("opening new connection");
+
+    // Open new connection directly without relying on state check
+    const permissionGranted = await checkPermissions();
+    if (permissionGranted) {
+      setActiveConversation("");
+      setChatTranscript([]);
+      setIsKrishnaInterfaceOpen(true);
+      setStoryTitle(storyTitle);
+      setSelectedTab("chat");
+      await connectToRealtime(storyId.toString());
+    }
   };
 
   return (
