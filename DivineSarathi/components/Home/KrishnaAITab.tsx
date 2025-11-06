@@ -224,6 +224,7 @@ const KrishnaAITab = ({
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   nestedScrollEnabled={true}
+                  style={{ height: 0.3 * height }}
                 >
                   {chatTranscript.length === 0 && !activeConversation ? (
                     <View style={styles.emptyStateContainer}>
