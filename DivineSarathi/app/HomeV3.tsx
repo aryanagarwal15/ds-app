@@ -93,6 +93,8 @@ export default function HomeV3() {
         setResponse("");
         stopPulseAnimation();
         stopRippleAnimation();
+        setIsMuted(false);
+        setStoryTitle("Ask Krishna Anything...");
       }
     },
     [
@@ -218,6 +220,13 @@ export default function HomeV3() {
   }, [selectedTab]);
 
   const handleStoryClick = (storyId: number, storyTitle: string) => {
+    if (
+      connectionState === "connected" ||
+      connectionState === "speaking" ||
+      connectionState === "listening"
+    ) {
+      handleConnectionToggle("");
+    }
     handleConnectionToggle(storyId.toString());
     setStoryTitle(storyTitle);
     setSelectedTab("chat");
@@ -227,9 +236,18 @@ export default function HomeV3() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
       <BottomNav selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      {selectedTab === "home" && <HomeTab onStoryClick={handleStoryClick}  />}
+      <View
+        style={{
+          display: selectedTab === "home" ? "flex" : "none",
+          flex: 1,
+          width: "100%",
+        }}
+      >
+        <HomeTab onStoryClick={handleStoryClick} />
+      </View>
       <KrishnaAITab
         fullscreen={selectedTab === "chat"}
+        setSelectedTab={setSelectedTab}
         connectionState={connectionState}
         isRecording={isRecording}
         transcript={transcript}

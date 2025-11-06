@@ -10,6 +10,7 @@ import {
   Platform,
   TouchableOpacity,
   ScrollView,
+  Image,
 } from "react-native";
 import { ConnectionState } from "@/types/audio";
 import { ChatMessage } from "@/types/audio";
@@ -21,6 +22,7 @@ const SCREEN_PADDING = 20;
 
 const KrishnaAITab = ({
   fullscreen,
+  setSelectedTab,
   connectionState,
   isRecording,
   transcript,
@@ -35,6 +37,7 @@ const KrishnaAITab = ({
   storyTitle,
 }: {
   fullscreen: boolean;
+  setSelectedTab: (tab: string) => void;
   connectionState: ConnectionState;
   isRecording: boolean;
   transcript: string;
@@ -179,26 +182,77 @@ const KrishnaAITab = ({
     <Animated.View style={containerStyle}>
       <Animated.View style={topSectionStyle}>
         {/* Image on the left */}
-        <View style={{ marginRight: 12 }}>
-          <Ionicons
-            name="person-circle-outline"
-            size={fullscreen ? 64 : 36}
-            color="#A88B5B"
-          />
-        </View>
-        {/* Text in the middle, flex: 1 to take available space */}
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: fullscreen ? 22 : 16,
-              fontWeight: "600",
-              color: "#000",
+
+        <View
+          style={[
+            { flexDirection: "row", alignItems: "center", width: "100%" },
+            !fullscreen && { justifyContent: "space-between" },
+          ]}
+        >
+          <View style={{ paddingRight: 12 }}>
+            <TouchableOpacity
+              disabled={fullscreen}
+              onPress={() => {
+                if (!fullscreen) {
+                  setSelectedTab("chat");
+                }
+              }}
+            >
+              <Image
+                source={require("@/assets/images/krishna.png")}
+                style={{ width: 40, height: 40 }}
+              />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            disabled={fullscreen}
+            onPress={() => {
+              if (!fullscreen) {
+                setSelectedTab("chat");
+              }
             }}
-            numberOfLines={1}
-            ellipsizeMode="tail"
           >
-            {storyTitle}
-          </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                color: "#000",
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {storyTitle}
+            </Text>
+          </TouchableOpacity>
+          {/* Play and mic buttons on the right (mini mode only) */}
+          {!fullscreen && (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TouchableOpacity
+                onPress={() => {
+                  onConnectionToggle("");
+                  if (!fullscreen) {
+                    setSelectedTab("chat");
+                  }
+                }}
+                style={{ marginRight: 8 }}
+              >
+                {connectionState === "connected" ||
+                connectionState === "speaking" ||
+                connectionState === "listening" ? (
+                  <Ionicons name="stop" size={24} color="#000" />
+                ) : (
+                  <Ionicons name="play-outline" size={24} color="#000" />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => onMuteToggle()}>
+                {isMuted ? (
+                  <Ionicons name="mic-off" size={24} color="#000" />
+                ) : (
+                  <Ionicons name="mic" size={24} color="#000" />
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {fullscreen && (
@@ -303,7 +357,7 @@ const KrishnaAITab = ({
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    backgroundColor: "#FFA34450",
+                    backgroundColor: isMuted ? "#FF6B6B50" : "#FFA34450",
                     borderRadius: 24,
                     paddingHorizontal: 32,
                     paddingVertical: 12,
@@ -317,18 +371,6 @@ const KrishnaAITab = ({
                 </View>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-        {/* Play and mic buttons on the right (mini mode only) */}
-        {!fullscreen && (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Ionicons
-              name="play-outline"
-              size={24}
-              color="#000"
-              style={{ marginRight: 16 }}
-            />
-            <Ionicons name="mic" size={24} color="#000" />
           </View>
         )}
       </Animated.View>
