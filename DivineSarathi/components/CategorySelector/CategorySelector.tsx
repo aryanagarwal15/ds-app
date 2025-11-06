@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 
 
-const CategorySelector = ({ categories, onCategorySelect }: { categories: string[], onCategorySelect: (category: string) => void }) => {
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+const CategorySelector = ({ categories, onCategorySelect, categorySelected }: { categories: string[], onCategorySelect: (category: string) => void, categorySelected: string }) => {
+  const [selectedCategory, setSelectedCategory] = useState(categorySelected);
 
   const handleSelect = (category: string) => {
     setSelectedCategory(category);

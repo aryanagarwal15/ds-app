@@ -111,9 +111,13 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
                 resizeMode="cover"
               />
               {/* Verse number on top right */}
-              <View style={styles.verseContainer}>
+              <BlurView
+                intensity={80}
+                tint="dark"
+                style={styles.verseContainer}
+              >
                 <Text style={styles.verseText}>verse {story.verse_number}</Text>
-              </View>
+              </BlurView>
               {/* Title overlay at bottom */}
               <LinearGradient
                 colors={["#62482510", "#00000040"]}
@@ -152,7 +156,7 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
             </View>
             {/* Title overlay at bottom */}
             <BlurView
-              intensity={100}
+              intensity={60}
               tint="light"
               blurReductionFactor={4}
               style={styles.expandedTitleOverlay}
@@ -162,13 +166,19 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
               </Text>
               {/* Play and favourite button */}
               <View style={styles.expandedStoryButtons}>
-                <TouchableOpacity style={styles.expandedStoryPlayButton} onPress={playStory}>
+                <TouchableOpacity
+                  style={styles.expandedStoryPlayButton}
+                  onPress={playStory}
+                >
                   <View style={styles.expandedStoryPlayButtonIcon}>
                     <Ionicons name="play" size={24} color="#000" />
                     <Text style={styles.expandedStoryPlayButtonText}>Play</Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.expandedStoryFavouriteButton} onPress={favouriteStory}>
+                <TouchableOpacity
+                  style={styles.expandedStoryFavouriteButton}
+                  onPress={favouriteStory}
+                >
                   <View style={styles.expandedStoryFavouriteButtonIcon}>
                     <Ionicons name="heart" size={24} color="#000" />
                     <Text style={styles.expandedStoryFavouriteButtonText}>
@@ -232,12 +242,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "#F5EAD6",
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    alignSelf: "flex-end",
-    zIndex: 2,
+    overflow: "hidden",
   },
   verseText: {
     color: "#fff",
@@ -295,7 +303,7 @@ const styles = StyleSheet.create({
   },
   expandedVerseContainer: {
     position: "absolute",
-    top: 24,
+    top: Platform.OS === "ios" ? 70 : 10,
     right: 24,
     backgroundColor: "#FFA344",
     borderRadius: 16,
@@ -315,7 +323,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    height: "75%",
+    height: "70%",
     alignItems: "center",
     overflow: "hidden",
   },
@@ -328,7 +336,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    top: 18,
+    top: Platform.OS === "ios" ? 68 : 10,
     left: 18,
     backgroundColor: "#fff",
     borderRadius: 18,

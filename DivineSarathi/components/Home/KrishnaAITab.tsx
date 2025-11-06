@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { ConnectionState } from "@/types/audio";
 import { ChatMessage } from "@/types/audio";
-import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
 
@@ -129,7 +128,7 @@ const KrishnaAITab = ({
       inputRange: [0, 1],
       outputRange: [48, height],
     }),
-    backgroundColor: "#fff",
+    backgroundColor: "#E5F5FF",
     borderRadius: containerAnim.interpolate({
       inputRange: [0, 1],
       outputRange: [24, 0],

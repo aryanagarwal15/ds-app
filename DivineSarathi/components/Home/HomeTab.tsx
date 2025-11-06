@@ -34,6 +34,7 @@ const HomeTab = ({
   useEffect(() => {
     fetchCategories().then((data) => {
       setSubCategories(data.subCategories);
+      setSelectedCategory(data.subCategories[0]);
     });
   }, []);
 
@@ -44,7 +45,6 @@ const HomeTab = ({
   }, []);
 
   useEffect(() => {
-    console.log(selectedCategory);
     if (selectedCategory) {
       fetchStoriesByCategory(selectedCategory).then((data) => {
         let fetchedStories = data.stories;
@@ -62,7 +62,7 @@ const HomeTab = ({
           }
         });
         setSubCategory2(subCategory2Map);
-        console.log(subCategory2Map);
+
       });
     }
   }, [selectedCategory]);
@@ -89,6 +89,7 @@ const HomeTab = ({
           <Text style={styles.geetaForDailyLife}>Geeta For Daily Life</Text>
           <CategorySelector
             categories={subCategories}
+            categorySelected={selectedCategory}
             onCategorySelect={setSelectedCategory}
           />
           {Object.entries(subCategory2).map(([subCategory2, stories]) => (

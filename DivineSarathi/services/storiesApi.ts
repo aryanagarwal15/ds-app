@@ -18,7 +18,6 @@ export interface Story {
 }
 
 export interface CategoryData {
-  category: string;
   sub_category: string;
 }
 
@@ -29,7 +28,6 @@ export interface ApiResponse<T> {
 }
 
 export interface ProcessedCategoriesData {
-  categories: string[];
   subCategories: string[];
 }
 
@@ -121,11 +119,13 @@ export async function fetchCategories(): Promise<ProcessedCategoriesData> {
   try {
     const headers = await getAuthenticatedHeaders();
 
-    const response: AxiosResponse<ApiResponse<CategoryData[]>> =
-      await axios.get(buildApiUrl(API_ENDPOINTS.STORIES.GET_ALL_CATEGORIES), {
+    const response: AxiosResponse<ApiResponse<string[]>> = await axios.get(
+      buildApiUrl(API_ENDPOINTS.STORIES.GET_ALL_CATEGORIES),
+      {
         headers,
         timeout: API_CONFIG.TIMEOUT,
-      });
+      }
+    );
 
     if (!response.data.success) {
       throw new StoriesApiError(
@@ -135,38 +135,7 @@ export async function fetchCategories(): Promise<ProcessedCategoriesData> {
 
     const categoriesData = response.data.data;
 
-    if (!Array.isArray(categoriesData)) {
-      throw new StoriesApiError("Invalid categories data format");
-    }
-
-    // Process categories and remove duplicates
-    const categories: string[] = [];
-    const subCategories: string[] = [];
-
-    for (const data of categoriesData) {
-      // Validate data structure
-      if (!data || typeof data !== "object" || !data.category) {
-        console.warn("Invalid category data:", data);
-        continue;
-      }
-
-      // Skip "Daily Stories" category as per original logic
-      if (data.category !== "Daily Stories") {
-        if (!categories.includes(data.category)) {
-          categories.push(data.category);
-        }
-
-        if (
-          data.sub_category &&
-          data.sub_category !== "null" &&
-          !subCategories.includes(data.sub_category)
-        ) {
-          subCategories.push(data.sub_category);
-        }
-      }
-    }
-
-    return { categories, subCategories };
+    return { subCategories: categoriesData as string[] };
   } catch (error) {
     console.error("Error fetching categories:", error);
     handleApiError(error);
@@ -176,12 +145,17 @@ export async function fetchCategories(): Promise<ProcessedCategoriesData> {
 /**
  * Fetch stories by category from the server
  */
-export async function fetchStoriesByCategory(category: string): Promise<ProcessedStoriesData> {
+export async function fetchStoriesByCategory(
+  category: string
+): Promise<ProcessedStoriesData> {
   try {
     const headers = await getAuthenticatedHeaders();
 
     const response: AxiosResponse<ApiResponse<Story[]>> = await axios.get(
-      buildApiUrl(API_ENDPOINTS.STORIES.GET_STORIES + `?sub_category=${category}`),
+      buildApiUrl(
+        API_ENDPOINTS.STORIES.GET_STORIES +
+          `?sub_category=${encodeURIComponent(category)}`
+      ),
       {
         headers,
         timeout: API_CONFIG.TIMEOUT,
@@ -210,7 +184,7 @@ export async function fetchStoriesByCategory(category: string): Promise<Processe
         continue;
       }
       stories.push(data);
-      }
+    }
     return { stories };
   } catch (error) {
     console.error("Error fetching stories by category:", error);
