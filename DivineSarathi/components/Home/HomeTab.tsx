@@ -62,7 +62,6 @@ const HomeTab = ({
           }
         });
         setSubCategory2(subCategory2Map);
-
       });
     }
   }, [selectedCategory]);
@@ -71,7 +70,7 @@ const HomeTab = ({
     <View style={styles.container}>
       <View style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 180 }}
           showsVerticalScrollIndicator={false}
         >
           {/* top bar with image to the left and option to go to profile in the right */}
@@ -85,7 +84,10 @@ const HomeTab = ({
               <Ionicons name="person-circle-outline" size={24} color="#000" />
             </TouchableOpacity>
           </View>
-          <DailyStories dailyStories={dailyStories} />
+          <DailyStories
+            dailyStories={dailyStories}
+            onStoryClick={onStoryClick}
+          />
           <Text style={styles.geetaForDailyLife}>Geeta For Daily Life</Text>
           <CategorySelector
             categories={subCategories}

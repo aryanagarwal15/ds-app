@@ -16,10 +16,8 @@ const CategorySelector = ({
   onCategorySelect: (category: string) => void;
   categorySelected: string;
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState(() => categorySelected);
 
   const handleSelect = (category: string) => {
-    setSelectedCategory(category);
     if (onCategorySelect) {
       onCategorySelect(category);
     }
@@ -37,7 +35,7 @@ const CategorySelector = ({
             key={category}
             style={[
               styles.categoryItem,
-              selectedCategory === category && styles.selectedCategoryItem,
+              categorySelected === category && styles.selectedCategoryItem,
             ]}
             onPress={() => handleSelect(category)}
             activeOpacity={0.7}
@@ -45,7 +43,7 @@ const CategorySelector = ({
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === category && styles.selectedCategoryText,
+                categorySelected === category && styles.selectedCategoryText,
               ]}
             >
               {category}

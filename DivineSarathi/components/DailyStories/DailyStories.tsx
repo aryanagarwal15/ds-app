@@ -9,7 +9,6 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import RudhakshaLine from "../../assets/images/rudraksha_line.svg";
 
 const { width } = Dimensions.get("window");
 const STORY_CARD_WIDTH = 220;
@@ -27,12 +26,12 @@ interface Story {
 
 interface DailyStoriesProps {
   dailyStories: Story[];
-  onStoryPress?: (story: Story) => void;
+  onStoryClick: (storyId: number, storyTitle: string) => void;
 }
 
 const DailyStories: React.FC<DailyStoriesProps> = ({
   dailyStories,
-  onStoryPress,
+  onStoryClick,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -59,8 +58,8 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
   };
 
   const handleCardPress = (story: Story, idx: number) => {
-    if (story.status !== "locked" && onStoryPress) {
-      onStoryPress(story);
+    if (story.status !== "locked" && onStoryClick) {
+      onStoryClick(Number(story.id), story.title);
     }
   };
 
@@ -131,9 +130,8 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
           const storyIdx = indicatorStart + i;
           const isActive = storyIdx === currentIndex;
           return (
-            <View>
+            <View key={storyIdx}>
               <View
-                key={storyIdx}
                 style={[
                   styles.indicatorDot,
                   isActive && styles.activeIndicatorDot,
@@ -144,7 +142,6 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
                   style={[
                     styles.indicatorText,
                     isActive && styles.activeIndicatorText,
-                   
                   ]}
                 >
                   {storyIdx + 1}
@@ -153,16 +150,11 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
               <View style={styles.indicatorImageContainer}>
                 {storyIdx == 0 && (
                   <Image
-              
                     source={require("../../assets/images/rudraksha_line.png")}
                   />
                 )}
+                <Image source={require("../../assets/images/rudraksha.png")} />
                 <Image
-
-                  source={require("../../assets/images/rudraksha.png")}
-                />
-                <Image
-
                   source={require("../../assets/images/rudraksha_line.png")}
                 />
               </View>

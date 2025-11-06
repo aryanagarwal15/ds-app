@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -6,75 +6,51 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  ActivityIndicator,
+  Share,
+  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-interface UserInfo {
-  name?: string;
-  email?: string;
-  age?: string;
-  occupation?: string;
-  phone?: string;
-}
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const Profile: React.FC = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo>({});
-  const [loading, setLoading] = useState(true);
+  // Get user profile from Redux store
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
+  const user = useSelector((state: RootState) => state.auth.user);
 
-  useEffect(() => {
-    loadUserInfo();
-  }, []);
-
-  const loadUserInfo = async () => {
-    try {
-      setLoading(true);
-      // Get user info from AsyncStorage
-      const storedUserInfo = await AsyncStorage.getItem("userInfo");
-      if (storedUserInfo) {
-        setUserInfo(JSON.parse(storedUserInfo));
-      }
-    } catch (error) {
-      console.error("Error loading user info:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Get the username - it could be in either userProfile.username or user.name
+  const userName = userProfile?.username || "";
+  const userFirstName = userName.split(" ")[0];
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Clear all stored user data
+            await AsyncStorage.multiRemove([
+              "authToken",
+              "authenticated",
+              "userInfo",
+            ]);
+            // Navigate back to login/index
+            router.replace("/");
+          } catch (error) {
+            console.error("Error during logout:", error);
+            Alert.alert("Error", "Failed to logout. Please try again.");
+          }
         },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Clear all stored user data
-              await AsyncStorage.multiRemove([
-                "authToken",
-                "authenticated",
-                "userInfo",
-              ]);
-              // Navigate back to login/index
-              router.replace("/");
-            } catch (error) {
-              console.error("Error during logout:", error);
-              Alert.alert("Error", "Failed to logout. Please try again.");
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleEditProfile = () => {
@@ -86,38 +62,15 @@ const Profile: React.FC = () => {
     router.back();
   };
 
-  if (loading) {
-    return (
-      <LinearGradient
-        colors={["#FFB080", "#FFB080", "#E6A0FF"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.container}
-      >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading profile...</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-    );
-  }
-
   return (
-    <LinearGradient
-      colors={["#FFB080", "#FFB080", "#E6A0FF"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={handleGoBack}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color="#000" />
           </Pressable>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>Hello, {userFirstName}!</Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -126,111 +79,48 @@ const Profile: React.FC = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <View style={styles.avatarContainer}>
-              <Ionicons name="person-circle" size={80} color="#007AFF" />
-            </View>
-            
-            <Text style={styles.userName}>
-              {userInfo.name || "Guest User"}
-            </Text>
-            
-            {userInfo.email && (
-              <Text style={styles.userEmail}>{userInfo.email}</Text>
-            )}
+          <View>
+            <TouchableOpacity
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message:
+                      "Invite friend to try out divinesarathi and download the app at divinesarathi.in/download",
+                  });
+                } catch (error) {
+                  console.error("Error sharing invite:", error);
+                  Alert.alert("Error", "Failed to open share dialog. Please try again.");
+                }
+              }}
+            >
+              <View style={styles.profileListContainer}>
+                <Text style={styles.profileListTitle}>Invite Friends</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-
-          {/* User Information */}
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            
-            <View style={styles.infoItem}>
-              <Ionicons name="person-outline" size={20} color="#666" />
-              <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Name</Text>
-                <Text style={styles.infoValue}>
-                  {userInfo.name || "Not provided"}
-                </Text>
-              </View>
-            </View>
-
-            {userInfo.age && (
-              <View style={styles.infoItem}>
-                <Ionicons name="calendar-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Age</Text>
-                  <Text style={styles.infoValue}>{userInfo.age}</Text>
-                </View>
-              </View>
-            )}
-
-            {userInfo.occupation && (
-              <View style={styles.infoItem}>
-                <Ionicons name="briefcase-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Occupation</Text>
-                  <Text style={styles.infoValue}>{userInfo.occupation}</Text>
-                </View>
-              </View>
-            )}
-
-            {userInfo.phone && (
-              <View style={styles.infoItem}>
-                <Ionicons name="call-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoValue}>{userInfo.phone}</Text>
-                </View>
-              </View>
-            )}
-
-            {userInfo.email && (
-              <View style={styles.infoItem}>
-                <Ionicons name="mail-outline" size={20} color="#666" />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{userInfo.email}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionsSection}>
-            <Pressable style={styles.actionButton} onPress={handleEditProfile}>
-              <Ionicons name="create-outline" size={20} color="#007AFF" />
-              <Text style={styles.actionButtonText}>Edit Profile</Text>
-              <Ionicons name="chevron-forward" size={16} color="#999" />
-            </Pressable>
-
-            <Pressable style={styles.actionButton}>
-              <Ionicons name="settings-outline" size={20} color="#007AFF" />
-              <Text style={styles.actionButtonText}>Settings</Text>
-              <Ionicons name="chevron-forward" size={16} color="#999" />
-            </Pressable>
-
-            <Pressable style={styles.actionButton}>
-              <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
-              <Text style={styles.actionButtonText}>Help & Support</Text>
-              <Ionicons name="chevron-forward" size={16} color="#999" />
-            </Pressable>
-          </View>
-
           {/* Logout Button */}
           <Pressable style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#ff6b6b" />
             <Text style={styles.logoutButtonText}>Logout</Text>
           </Pressable>
+          <View style={styles.complianceContainer}>
+            <TouchableOpacity onPress={() => {}}>
+              <Text style={styles.complianceText}>Terms of Service</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {}}>
+              <Text style={styles.complianceText}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   safeArea: {
     flex: 1,
@@ -248,7 +138,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#000",
   },
   headerRight: {
     width: 40, // Same width as back button for centering
@@ -259,132 +149,43 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 30,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#666",
-    fontWeight: "500",
-  },
-  profileCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 16,
-    padding: 24,
-    marginHorizontal: 16,
-    marginTop: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  avatarContainer: {
-    marginBottom: 16,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 16,
-    color: "#666",
-  },
-  infoSection: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 16,
-  },
-  infoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  infoTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: "#999",
-    marginBottom: 2,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
-  },
-  actionsSection: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  actionButtonText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 12,
-    flex: 1,
-  },
   logoutButton: {
-    backgroundColor: "rgba(255, 107, 107, 0.1)",
-    borderRadius: 12,
+    backgroundColor: "#FF6B6B",
+    borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
     marginHorizontal: 16,
     marginTop: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255, 107, 107, 0.3)",
   },
   logoutButtonText: {
     fontSize: 16,
-    color: "#ff6b6b",
+    color: "#fff",
     fontWeight: "600",
     marginLeft: 8,
+  },
+  profileListContainer: {
+    backgroundColor: "#FFA34410",
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 20,
+    shadowColor: "#000",
+  },
+  profileListTitle: {
+    fontSize: 18,
+    color: "#000",
+  },
+  complianceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginHorizontal: 24,
+    marginTop: 16,
+  },
+  complianceText: {
+    fontSize: 14,
+    color: "#000",
   },
 });
 
