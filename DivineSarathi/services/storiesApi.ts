@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosResponse } from "axios";
 import { buildApiUrl, API_ENDPOINTS, API_CONFIG } from "../constants/config";
+import { DailyStory } from "@/components/DailyStories/DailyStories";
 
 export interface Story {
   id: string;
@@ -15,6 +16,7 @@ export interface Story {
   verse_number: string;
   full_verse: string;
   sub_category_2: string;
+  is_favourite: boolean;
 }
 
 export interface CategoryData {
@@ -192,10 +194,10 @@ export async function fetchStoriesByCategory(
   }
 }
 
-export async function fetchDailyStories(): Promise<ProcessedStoriesData> {
+export async function fetchDailyStories(): Promise<{ stories: DailyStory[] }> {
   try {
     const headers = await getAuthenticatedHeaders();
-    const response: AxiosResponse<ApiResponse<Story[]>> = await axios.get(
+    const response: AxiosResponse<ApiResponse<DailyStory[]>> = await axios.get(
       buildApiUrl(API_ENDPOINTS.STORIES.GET_DAILY_STORIES),
       { headers, timeout: API_CONFIG.TIMEOUT }
     );
@@ -204,9 +206,53 @@ export async function fetchDailyStories(): Promise<ProcessedStoriesData> {
         response.data.message || "Failed to fetch daily stories"
       );
     }
-    return { stories: response.data.data };
+    return { stories: response.data.data as DailyStory[] };
   } catch (error) {
     console.error("Error fetching daily stories:", error);
+    handleApiError(error);
+  }
+}
+
+/**
+ * Add a story to favourites
+ */
+export async function addToFavourites(storyId: number): Promise<void> {
+  try {
+    const headers = await getAuthenticatedHeaders();
+    const response: AxiosResponse<ApiResponse<any>> = await axios.post(
+      buildApiUrl(API_ENDPOINTS.FAVOURITE.ADD),
+      { storyId },
+      { headers, timeout: API_CONFIG.TIMEOUT }
+    );
+    if (!response.data.success) {
+      throw new StoriesApiError(
+        response.data.message || "Failed to add story to favourites"
+      );
+    }
+  } catch (error) {
+    console.error("Error adding story to favourites:", error);
+    handleApiError(error);
+  }
+}
+
+/**
+ * Remove a story from favourites
+ */
+export async function removeFromFavourites(storyId: number): Promise<void> {
+  try {
+    const headers = await getAuthenticatedHeaders();
+    const response: AxiosResponse<ApiResponse<any>> = await axios.post(
+      buildApiUrl(API_ENDPOINTS.FAVOURITE.REMOVE),
+      { storyId },
+      { headers, timeout: API_CONFIG.TIMEOUT }
+    );
+    if (!response.data.success) {
+      throw new StoriesApiError(
+        response.data.message || "Failed to remove story from favourites"
+      );
+    }
+  } catch (error) {
+    console.error("Error removing story from favourites:", error);
     handleApiError(error);
   }
 }

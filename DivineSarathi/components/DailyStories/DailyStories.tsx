@@ -17,7 +17,7 @@ const INDICATOR_COUNT = 7;
 
 type StoryStatus = "locked" | "play" | "listened" | "today";
 
-interface Story {
+export interface DailyStory {
   id: string;
   title: string;
   image: any; // require or uri
@@ -25,7 +25,7 @@ interface Story {
 }
 
 interface DailyStoriesProps {
-  dailyStories: Story[];
+  dailyStories: DailyStory[];
   onStoryClick: (storyId: number, storyTitle: string) => void;
 }
 
@@ -57,7 +57,7 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
     setCurrentIndex(idx);
   };
 
-  const handleCardPress = (story: Story, idx: number) => {
+  const handleCardPress = (story: DailyStory, idx: number) => {
     if (story.status !== "locked" && onStoryClick) {
       onStoryClick(Number(story.id), story.title);
     }

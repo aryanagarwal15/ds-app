@@ -294,7 +294,7 @@ export default function HomeV3() {
         isUserMuted={isUserMuted}
         setIsUserMuted={setIsUserMuted}
       />
-      {selectedTab === "favourites" && <StoriesTab />}
+      {selectedTab === "stories" && <StoriesTab />}
     </SafeAreaView>
   );
 }

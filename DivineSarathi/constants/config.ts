@@ -74,6 +74,13 @@ export const API_ENDPOINTS = {
     GET_STORIES: '/stories/getStories',
     GET_DAILY_STORIES: '/stories/getDailyStories',
   },
+
+  // Favourite management
+  FAVOURITE: {
+    GET_ALL: '/favourite/getAll',
+    ADD: '/favourite/add',
+    REMOVE: '/favourite/remove',
+  },
   
   // Add more endpoints as needed
 } as const;

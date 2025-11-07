@@ -305,7 +305,7 @@ const KrishnaAITab = ({
                       </Text>
                     </View>
                   ) : (
-                    <>
+                    <View key={chatTranscript.length}>
                       {chatTranscript.map((message) =>
                         renderChatMessage(
                           message.sender,
@@ -319,7 +319,7 @@ const KrishnaAITab = ({
                           activeConversation,
                           false
                         )}
-                    </>
+                    </View>
                   )}
                 </ScrollView>
               </View>

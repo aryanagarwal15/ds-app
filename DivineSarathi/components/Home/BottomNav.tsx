@@ -20,7 +20,12 @@ const BottomNav = ({
   }, [selectedTab]);
 
   return (
-    <BlurView intensity={100} tint="light" blurReductionFactor={4} style={styles.bottomNav}>
+    <BlurView
+      intensity={100}
+      tint="light"
+      blurReductionFactor={4}
+      style={styles.bottomNav}
+    >
       <TouchableOpacity
         onPress={() => handleTabPress("home")}
         style={styles.bottomNavItem}
@@ -52,18 +57,18 @@ const BottomNav = ({
         </View>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => handleTabPress("favourites")}
+        onPress={() => handleTabPress("stories")}
         style={styles.bottomNavItem}
       >
         <View
           style={
-            selectedTab === "favourites"
+            selectedTab === "stories"
               ? styles.bottomNavItemActive
               : styles.bottomNavItem
           }
         >
-          <Ionicons name="heart-outline" size={24} color="#000" />
-          <Text style={styles.bottomNavItemText}>Favourites</Text>
+          <Ionicons name="book-outline" size={24} color="#000" />
+          <Text style={styles.bottomNavItemText}>Stories</Text>
         </View>
       </TouchableOpacity>
     </BlurView>

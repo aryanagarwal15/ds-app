@@ -13,9 +13,13 @@ import {
   Modal,
   Pressable,
   Platform,
+  Alert,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { buildApiUrl, API_ENDPOINTS, API_CONFIG } from "../../constants/config";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,20 +31,27 @@ type Story = {
   sub_title: string;
   description: string;
   duration: number;
+  is_favourite: boolean;
 };
 
 type StorySubsectionProps = {
   onStoryClick: (storyId: number, storyTitle: string) => void;
   sectionTitle: string;
   stories: Story[];
+  type: "grid" | "list";
+  onFavouriteToggle?: () => void;
 };
 
 const StorySubsection: React.FC<StorySubsectionProps> = ({
   onStoryClick,
   sectionTitle,
   stories,
+  type = "list",
+  onFavouriteToggle,
 }) => {
   const [expandedStory, setExpandedStory] = useState<null | Story>(null);
+  const [isFavouriting, setIsFavouriting] = useState(false);
+  const [isFavourited, setIsFavourited] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
   const openStory = (story: Story) => {
@@ -67,8 +78,76 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
     onStoryClick(expandedStory?.id || 0, expandedStory?.title || "");
   };
 
-  const favouriteStory = () => {
-    console.log("Favouriting story");
+  const favouriteStory = async () => {
+    if (!expandedStory || isFavouriting) return;
+
+    try {
+      setIsFavouriting(true);
+
+      // Get auth token
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        Alert.alert("Error", "Please login to add favorites");
+        return;
+      }
+
+      const isCurrentlyFavourited = isFavourited || expandedStory.is_favourite;
+      const endpoint = isCurrentlyFavourited
+        ? API_ENDPOINTS.FAVOURITE.REMOVE
+        : API_ENDPOINTS.FAVOURITE.ADD;
+
+      // Make API call
+      const response = await axios.post(
+        buildApiUrl(endpoint),
+        { storyId: expandedStory.id },
+        {
+          headers: {
+            ...API_CONFIG.HEADERS,
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: API_CONFIG.TIMEOUT,
+        }
+      );
+
+      if (response.data.success) {
+        setIsFavourited(!isCurrentlyFavourited);
+        // Update the story's is_favourite property
+        if (expandedStory) {
+          expandedStory.is_favourite = !isCurrentlyFavourited;
+        }
+        // Notify parent component of the toggle
+        if (onFavouriteToggle) {
+          onFavouriteToggle();
+        }
+      } else {
+        Alert.alert(
+          "Error",
+          response.data.message ||
+            `Failed to ${
+              isCurrentlyFavourited ? "remove story from" : "add story to"
+            } favorites`
+        );
+      }
+    } catch (error: any) {
+      console.error("Error updating favorite:", error);
+
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const message = error.response?.data?.message || error.message;
+
+        if (statusCode === 401 || statusCode === 403) {
+          Alert.alert("Error", "Authentication expired. Please login again.");
+        } else if (!error.response) {
+          Alert.alert("Error", "Network error. Please check your connection.");
+        } else {
+          Alert.alert("Error", message || "Failed to update favorite");
+        }
+      } else {
+        Alert.alert("Error", "An unexpected error occurred");
+      }
+    } finally {
+      setIsFavouriting(false);
+    }
   };
 
   // Animation for expanded story
@@ -90,27 +169,91 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
   return (
     <View style={{ marginBottom: 32 }}>
       {/* Section Title */}
-      <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+      {sectionTitle ? (
+        <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+      ) : null}
       {/* Stories Row */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 8, paddingRight: 16 }}
-      >
-        {stories.map((story, idx) => (
-          <TouchableOpacity
-            key={idx}
-            activeOpacity={0.85}
-            onPress={() => openStory(story)}
-            style={styles.storyCardContainer}
-          >
-            <View style={styles.storyCard}>
+      {type === "list" ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 8, paddingRight: 16 }}
+        >
+          {stories.map((story, idx) => (
+            <TouchableOpacity
+              key={idx}
+              activeOpacity={0.85}
+              onPress={() => openStory(story)}
+              style={styles.storyCardContainer}
+            >
+              <View style={styles.storyCard}>
+                <Image
+                  source={{ uri: story.image }}
+                  style={styles.storyImage}
+                  resizeMode="cover"
+                />
+                {/* Verse number on top right */}
+                <BlurView
+                  intensity={80}
+                  tint="dark"
+                  style={styles.verseContainer}
+                >
+                  <Text style={styles.verseText}>{story.verse_number}</Text>
+                </BlurView>
+                {/* Title overlay at bottom */}
+                <LinearGradient
+                  colors={["#00000070", "#00000060"]}
+                  style={[styles.titleOverlay, { justifyContent: "center" }]}
+                >
+                  <View style={{ flex: 1, justifyContent: "center" }}>
+                    <Text style={styles.storyTitle} numberOfLines={2}>
+                      {story.title}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            paddingLeft: 8,
+            paddingRight: 16,
+          }}
+        >
+          {stories.map((story, idx) => (
+            <TouchableOpacity
+              key={idx}
+              activeOpacity={0.85}
+              onPress={() => openStory(story)}
+              style={{
+                width: "46%",
+                margin: "2%",
+                aspectRatio: 1,
+                borderRadius: 16,
+                overflow: "hidden",
+                backgroundColor: "#FBF7EF",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                elevation: 2,
+              }}
+            >
               <Image
                 source={{ uri: story.image }}
-                style={styles.storyImage}
+                style={[
+                  styles.gridStoryImage,
+                  {
+                    borderTopLeftRadius: 16,
+                    borderTopRightRadius: 16,
+                    width: "100%",
+                    height: "100%",
+                  },
+                ]}
                 resizeMode="cover"
               />
-              {/* Verse number on top right */}
               <BlurView
                 intensity={80}
                 tint="dark"
@@ -118,7 +261,6 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
               >
                 <Text style={styles.verseText}>{story.verse_number}</Text>
               </BlurView>
-              {/* Title overlay at bottom */}
               <LinearGradient
                 colors={["#00000070", "#00000060"]}
                 style={[styles.titleOverlay, { justifyContent: "center" }]}
@@ -129,10 +271,10 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
                   </Text>
                 </View>
               </LinearGradient>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
       {/* Expanded Story Modal */}
       <Modal
         visible={!!expandedStory}
@@ -178,13 +320,34 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.expandedStoryFavouriteButton}
+                  style={[
+                    styles.expandedStoryFavouriteButton,
+                    isFavouriting &&
+                      styles.expandedStoryFavouriteButtonDisabled,
+                    (isFavourited || expandedStory.is_favourite) &&
+                      styles.expandedStoryFavouriteButtonFilled,
+                  ]}
                   onPress={favouriteStory}
+                  disabled={isFavouriting}
                 >
                   <View style={styles.expandedStoryFavouriteButtonIcon}>
-                    <Ionicons name="heart" size={24} color="#000" />
+                    <Ionicons
+                      name={
+                        isFavouriting
+                          ? "hourglass-outline"
+                          : isFavourited || expandedStory.is_favourite
+                          ? "heart"
+                          : "heart-outline"
+                      }
+                      size={24}
+                      color="#000"
+                    />
                     <Text style={styles.expandedStoryFavouriteButtonText}>
-                      Favourite
+                      {isFavouriting
+                        ? "Updating..."
+                        : isFavourited || expandedStory.is_favourite
+                        ? "Favourite"
+                        : "Favourite"}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -387,6 +550,9 @@ const styles = StyleSheet.create({
     padding: 12,
     width: 125,
   },
+  expandedStoryFavouriteButtonDisabled: {
+    opacity: 0.6,
+  },
   expandedStoryPlayButtonText: {
     fontSize: 16,
     color: "#000",
@@ -408,6 +574,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  expandedStoryFavouriteButtonFilled: {
+    backgroundColor: "#FFA344",
+  },
+  gridStoryImage: {
+    width: "100%",
+    height: "100%",
+  },
+  gridStoryTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
+    marginTop: 8,
+    textAlign: "center",
   },
 });
 

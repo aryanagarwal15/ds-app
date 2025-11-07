@@ -17,7 +17,7 @@ import {
 import CategorySelector from "../CategorySelector/CategorySelector";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import DailyStories from "../DailyStories/DailyStories";
+import DailyStories, { DailyStory } from "../DailyStories/DailyStories";
 
 const HomeTab = ({
   onStoryClick,
@@ -25,7 +25,7 @@ const HomeTab = ({
   onStoryClick: (storyId: number, storyTitle: string) => void;
 }) => {
   const [subCategories, setSubCategories] = useState<string[]>([]);
-  const [dailyStories, setDailyStories] = useState<Story[]>([]);
+  const [dailyStories, setDailyStories] = useState<DailyStory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>();
   const [subCategory2, setSubCategory2] = useState<{ [key: string]: Story[] }>(
     {}
@@ -81,7 +81,11 @@ const HomeTab = ({
             />
             <TouchableOpacity onPress={() => router.push("/Profile")}>
               {/* profile icon */}
-              <Ionicons name="person-circle-outline" size={24} color="#CDB459" />
+              <Ionicons
+                name="person-circle-outline"
+                size={24}
+                color="#CDB459"
+              />
             </TouchableOpacity>
           </View>
           <DailyStories
