@@ -41,9 +41,17 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
 
   // Auto-scroll to "today" story on mount
   useEffect(() => {
-    const todayIndex = dailyStories.findIndex(
+    let todayIndex = dailyStories.findIndex(
       (story) => story.status === "today"
     );
+
+    const lockedIndex = dailyStories.findIndex(
+      (story) => story.status === "locked"
+    );
+
+    if (todayIndex == -1) {
+      todayIndex = lockedIndex - 1;
+    }
 
     if (todayIndex !== -1 && scrollRef.current) {
       // Calculate the scroll position
@@ -158,7 +166,10 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
               <View
                 style={[
                   styles.indicatorDot,
-                  story.status === "listened" && { backgroundColor: "#CDB45970", borderWidth: 0 },
+                  story.status === "listened" && {
+                    backgroundColor: "#CDB45970",
+                    borderWidth: 0,
+                  },
                   isActive && styles.activeIndicatorDot,
                   storyIdx == 0 && styles.indicatorTextFirst,
                   story.status === "today" && {
