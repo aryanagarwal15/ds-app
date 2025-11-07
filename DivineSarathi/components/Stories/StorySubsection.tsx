@@ -120,7 +120,7 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
               </BlurView>
               {/* Title overlay at bottom */}
               <LinearGradient
-                colors={["#62482510", "#00000040"]}
+                colors={["#00000070", "#00000060"]}
                 style={[styles.titleOverlay, { justifyContent: "center" }]}
               >
                 <View style={{ flex: 1, justifyContent: "center" }}>
@@ -209,8 +209,8 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
   );
 };
 
-const CARD_WIDTH = 234;
-const CARD_HEIGHT = 234;
+const CARD_WIDTH = 200;
+const CARD_HEIGHT = 200;
 
 const styles = StyleSheet.create({
   sectionTitle: {
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   storyTitle: {
     color: "#fff",
     fontWeight: "700",
-    fontSize: 15,
+    fontSize: 13,
     textAlign: "center",
     minHeight: 36,
   },
