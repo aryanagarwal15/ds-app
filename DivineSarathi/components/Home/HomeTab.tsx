@@ -81,7 +81,7 @@ const HomeTab = ({
             />
             <TouchableOpacity onPress={() => router.push("/Profile")}>
               {/* profile icon */}
-              <Ionicons name="person-circle-outline" size={24} color="#000" />
+              <Ionicons name="person-circle-outline" size={24} color="#CDB459" />
             </TouchableOpacity>
           </View>
           <DailyStories

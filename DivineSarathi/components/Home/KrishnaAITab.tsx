@@ -218,10 +218,10 @@ const KrishnaAITab = ({
                 fontWeight: "600",
                 color: "#000",
               }}
-              numberOfLines={1}
+              numberOfLines={2}
               ellipsizeMode="tail"
             >
-              {storyTitle}
+              {(!fullscreen && storyTitle.length > 20) ? storyTitle.slice(0, 20) + "..." : storyTitle}
             </Text>
           </TouchableOpacity>
           {/* Play and mic buttons on the right (mini mode only) */}

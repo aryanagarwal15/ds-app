@@ -128,7 +128,7 @@ const OnboardingTransition: React.FC = () => {
         // Navigate to Home after animation completes
         router.replace('/HomeV3');
       });
-    }, 8000);
+    }, 4000);
   };
 
   const rotateInterpolate = rotateAnim.interpolate({

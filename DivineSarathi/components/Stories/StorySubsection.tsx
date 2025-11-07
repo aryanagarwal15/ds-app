@@ -121,11 +121,13 @@ const StorySubsection: React.FC<StorySubsectionProps> = ({
               {/* Title overlay at bottom */}
               <LinearGradient
                 colors={["#62482510", "#00000040"]}
-                style={styles.titleOverlay}
+                style={[styles.titleOverlay, { justifyContent: "center" }]}
               >
-                <Text style={styles.storyTitle} numberOfLines={2}>
-                  {story.title}
-                </Text>
+                <View style={{ flex: 1, justifyContent: "center" }}>
+                  <Text style={styles.storyTitle} numberOfLines={2}>
+                    {story.title}
+                  </Text>
+                </View>
               </LinearGradient>
             </View>
           </TouchableOpacity>
@@ -258,15 +260,17 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "#00000070",
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     alignItems: "center",
+    justifyContent: "center",
   },
   storyTitle: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 15,
     textAlign: "center",
+    minHeight: 36,
   },
   modalBackdrop: {
     position: "absolute",

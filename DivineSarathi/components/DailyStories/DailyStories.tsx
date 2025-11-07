@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
     width: "75%",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    minHeight: 36,
   },
   statusButtonContainer: {
     position: "absolute",
