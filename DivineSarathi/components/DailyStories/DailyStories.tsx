@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ export interface DailyStory {
   title: string;
   image: any; // require or uri
   status: StoryStatus;
+  position: number;
 }
 
 interface DailyStoriesProps {
@@ -35,6 +36,31 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // For horizontal scroll
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Auto-scroll to "today" story on mount
+  useEffect(() => {
+    const todayIndex = dailyStories.findIndex(
+      (story) => story.status === "today"
+    );
+
+    if (todayIndex !== -1 && scrollRef.current) {
+      // Calculate the scroll position
+      const scrollPosition =
+        todayIndex * (STORY_CARD_WIDTH + STORY_CARD_MARGIN);
+
+      // Use a timeout to ensure the layout is ready
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          x: scrollPosition,
+          animated: true,
+        });
+        setCurrentIndex(todayIndex);
+      }, 100);
+    }
+  }, [dailyStories]);
+
   // Calculate the indicator window
   let indicatorStart = 0;
   if (currentIndex > 5 && dailyStories.length > INDICATOR_COUNT) {
@@ -47,9 +73,6 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
     indicatorStart + INDICATOR_COUNT,
     dailyStories.length
   );
-
-  // For horizontal scroll
-  const scrollRef = useRef<ScrollView>(null);
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -128,31 +151,44 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
           length: Math.min(INDICATOR_COUNT, dailyStories.length),
         }).map((_, i) => {
           const storyIdx = indicatorStart + i;
+          const story = dailyStories[storyIdx];
           const isActive = storyIdx === currentIndex;
           return (
             <View key={storyIdx}>
               <View
                 style={[
                   styles.indicatorDot,
+                  story.status === "listened" && { backgroundColor: "#CDB45970", borderWidth: 0 },
                   isActive && styles.activeIndicatorDot,
                   storyIdx == 0 && styles.indicatorTextFirst,
+                  story.status === "today" && {
+                    borderWidth: 4,
+                    borderColor: "#CDB459",
+                  },
                 ]}
               >
                 <Text
                   style={[
                     styles.indicatorText,
                     isActive && styles.activeIndicatorText,
+                    story.status === "listened" && { color: "#fff" },
                   ]}
                 >
-                  {storyIdx + 1}
+                  {story?.position}
                 </Text>
               </View>
-              <View style={styles.indicatorImageContainer}>
+              <View
+                style={[
+                  styles.indicatorImageContainer,
+                  story.status === "locked" && { opacity: 0.5 },
+                ]}
+              >
                 {storyIdx == 0 && (
                   <Image
                     source={require("../../assets/images/rudraksha_line.png")}
                   />
                 )}
+
                 <Image source={require("../../assets/images/rudraksha.png")} />
                 <Image
                   source={require("../../assets/images/rudraksha_line.png")}
@@ -254,16 +290,17 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#E0E0E0",
+    borderWidth: 2,
+    borderColor: "#CDB459",
     marginHorizontal: 2,
     alignItems: "center",
     justifyContent: "center",
   },
   activeIndicatorDot: {
-    backgroundColor: "#FFA344",
+    backgroundColor: "#CDB459",
   },
   indicatorText: {
-    color: "#888",
+    color: "#CDB459",
     fontWeight: "600",
     fontSize: 16,
   },
@@ -278,7 +315,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",
