@@ -39,6 +39,10 @@ export const getApiBaseUrl = (): string => {
  * API Endpoints
  */
 export const API_ENDPOINTS = {
+  // Generic
+  GENERIC: {
+    STATUS: '/generic/status',
+  },
   // Authentication
   AUTH: {
     GOOGLE: '/auth/google/app',
