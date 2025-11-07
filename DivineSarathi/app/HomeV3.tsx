@@ -24,6 +24,7 @@ export default function HomeV3() {
   const [activeConversation, setActiveConversation] = useState<string>("");
   //krishnaInterfaceOpen
   const [isKrishnaInterfaceOpen, setIsKrishnaInterfaceOpen] = useState(false);
+  const [isUserMuted, setIsUserMuted] = useState(false);
   const [storyTitle, setStoryTitle] = useState<string>(
     "Ask Krishna Anything..."
   );
@@ -219,8 +220,18 @@ export default function HomeV3() {
   }, [response, connectionState]);
 
   useEffect(() => {
-    console.log("selectedTab", selectedTab);
-  }, [selectedTab]);
+    if (connectionState === "speaking") {
+      handleMuteToggle();
+    }
+    console.log("connectionState", connectionState);
+    console.log("isMuted", isMuted);
+    console.log("isUserMuted", isUserMuted);
+    if (connectionState === "connected") {
+      if (isMuted && !isUserMuted) {
+        handleMuteToggle();
+      }
+    }
+  }, [connectionState]);
 
   const closeConnection = async () => {
     if (
@@ -280,6 +291,8 @@ export default function HomeV3() {
         isKrishnaInterfaceOpen={isKrishnaInterfaceOpen}
         setIsKrishnaInterfaceOpen={setIsKrishnaInterfaceOpen}
         storyTitle={storyTitle}
+        isUserMuted={isUserMuted}
+        setIsUserMuted={setIsUserMuted}
       />
       {selectedTab === "favourites" && <StoriesTab />}
     </SafeAreaView>

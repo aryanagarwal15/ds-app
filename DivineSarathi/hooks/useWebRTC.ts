@@ -21,7 +21,7 @@ export const useWebRTC = (
   setResponse: (response: string | ((prev: string) => string)) => void,
   startRippleAnimation: () => void,
   stopRippleAnimation: () => void,
-  localStreamRef: React.MutableRefObject<MediaStream | null>,
+  localStreamRef: React.MutableRefObject<MediaStream | null>
 ) => {
   // WebRTC refs
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -29,7 +29,7 @@ export const useWebRTC = (
 
   // Add a ref to store the remote audio track
   const remoteAudioTrackRef = useRef<any>(null);
-  
+
   // Add a ref to prevent multiple simultaneous connection attempts
   const isConnectingRef = useRef<boolean>(false);
 
@@ -56,7 +56,7 @@ export const useWebRTC = (
 
         case "input_audio_buffer.speech_stopped":
           console.log("Speech stopped");
-          setConnectionState("connected");
+          // setConnectionState("connected");
           stopRippleAnimation();
           break;
 
@@ -81,7 +81,16 @@ export const useWebRTC = (
 
         case "response.done":
           console.log("Response completed");
+          break;
+
+        case "output_audio_buffer.stopped":
+          console.log("Output audio buffer stopped");
           setConnectionState("connected");
+          break;
+
+        case "output_audio_buffer.started":
+          console.log("Output audio buffer started");
+          setConnectionState("speaking");
           break;
 
         case "error":
@@ -154,243 +163,253 @@ export const useWebRTC = (
   );
 
   // Connect to OpenAI Realtime API using WebRTC
-  const connectToRealtime = useCallback(async (storyId: string) => {
-    // Prevent multiple simultaneous connection attempts
-    if (isConnectingRef.current) {
-      console.log("Connection already in progress, ignoring request");
-      return;
-    }
-    
-    isConnectingRef.current = true;
-    let peerConnection: RTCPeerConnection | null = null;
-
-    try {
-      // Clean up any existing connection first
-      if (peerConnectionRef.current) {
-        console.log("Cleaning up existing connection...");
-        peerConnectionRef.current.close();
-        peerConnectionRef.current = null;
-      }
-      
-      if (dataChannelRef.current) {
-        dataChannelRef.current.close();
-        dataChannelRef.current = null;
+  const connectToRealtime = useCallback(
+    async (storyId: string) => {
+      // Prevent multiple simultaneous connection attempts
+      if (isConnectingRef.current) {
+        console.log("Connection already in progress, ignoring request");
+        return;
       }
 
-      setConnectionState("connecting");
-      setError(null);
+      isConnectingRef.current = true;
+      let peerConnection: RTCPeerConnection | null = null;
 
-      // Get ephemeral key from backend
-      console.log("Fetching ephemeral key...");
-      console.log("Story ID:", storyId);
-      const ephemeralKey = await fetchEphemeralKey(storyId || "");
-      console.log("Ephemeral key obtained");
+      try {
+        // Clean up any existing connection first
+        if (peerConnectionRef.current) {
+          console.log("Cleaning up existing connection...");
+          peerConnectionRef.current.close();
+          peerConnectionRef.current = null;
+        }
 
-      // Create RTCPeerConnection with error handling
-      const configuration = {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun1.l.google.com:19302" },
-        ],
-      };
+        if (dataChannelRef.current) {
+          dataChannelRef.current.close();
+          dataChannelRef.current = null;
+        }
 
-      console.log("Creating RTCPeerConnection...");
-      peerConnection = new RTCPeerConnection(configuration);
-      peerConnectionRef.current = peerConnection;
-      console.log("RTCPeerConnection created successfully");
+        setConnectionState("connecting");
+        setError(null);
 
-      // Create data channel for realtime events
-      const dataChannel = peerConnection.createDataChannel("oai-events", {
-        ordered: true,
-      });
-      dataChannelRef.current = dataChannel;
-      setupDataChannel(dataChannel);
+        // Get ephemeral key from backend
+        console.log("Fetching ephemeral key...");
+        console.log("Story ID:", storyId);
+        const ephemeralKey = await fetchEphemeralKey(storyId || "");
+        console.log("Ephemeral key obtained");
 
-      // Handle remote audio stream with error protection
-      (peerConnection as any).ontrack = (event: any) => {
-        try {
-          console.log("Received remote track:", event.track.kind);
-          if (event.track.kind === "audio") {
+        // Create RTCPeerConnection with error handling
+        const configuration = {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+          ],
+        };
+
+        console.log("Creating RTCPeerConnection...");
+        peerConnection = new RTCPeerConnection(configuration);
+        peerConnectionRef.current = peerConnection;
+        console.log("RTCPeerConnection created successfully");
+
+        // Create data channel for realtime events
+        const dataChannel = peerConnection.createDataChannel("oai-events", {
+          ordered: true,
+        });
+        dataChannelRef.current = dataChannel;
+        setupDataChannel(dataChannel);
+
+        // Handle remote audio stream with error protection
+        (peerConnection as any).ontrack = (event: any) => {
+          try {
+            console.log("Received remote track:", event.track.kind);
+            if (event.track.kind === "audio") {
+              console.log(
+                "Remote audio track received - audio will play automatically"
+              );
+
+              // Force audio through speaker instead of earpiece
+              InCallManager.start({ media: "audio" });
+              InCallManager.setForceSpeakerphoneOn(true);
+
+              // Store the remote audio track reference
+              remoteAudioTrackRef.current = event.track;
+
+              // Still try to set volume (though it may not be the main issue)
+              event.track._setVolume(1);
+              console.log("Audio routed to speaker and volume boosted");
+            }
+          } catch (err) {
+            console.error("Error handling remote track:", err);
+          }
+        };
+
+        // Handle ICE connection state changes with error protection
+        (peerConnection as any).oniceconnectionstatechange = () => {
+          try {
             console.log(
-              "Remote audio track received - audio will play automatically"
+              "ICE connection state:",
+              peerConnection?.iceConnectionState
             );
-
-            // Force audio through speaker instead of earpiece
-            InCallManager.start({ media: "audio" });
-            InCallManager.setForceSpeakerphoneOn(true);
-
-            // Store the remote audio track reference
-            remoteAudioTrackRef.current = event.track;
-
-            // Still try to set volume (though it may not be the main issue)
-            event.track._setVolume(1);
-            console.log("Audio routed to speaker and volume boosted");
+            if (
+              peerConnection?.iceConnectionState === "failed" ||
+              peerConnection?.iceConnectionState === "disconnected"
+            ) {
+              setError("Connection lost. Please try again.");
+              setConnectionState("error");
+            }
+          } catch (err) {
+            console.error("Error handling ICE state change:", err);
           }
-        } catch (err) {
-          console.error("Error handling remote track:", err);
-        }
-      };
+        };
 
-      // Handle ICE connection state changes with error protection
-      (peerConnection as any).oniceconnectionstatechange = () => {
-        try {
-          console.log(
-            "ICE connection state:",
-            peerConnection?.iceConnectionState
-          );
-          if (
-            peerConnection?.iceConnectionState === "failed" ||
-            peerConnection?.iceConnectionState === "disconnected"
-          ) {
-            setError("Connection lost. Please try again.");
-            setConnectionState("error");
+        // Add local audio stream with error handling
+        if (localStreamRef.current) {
+          try {
+            const audioTrack = localStreamRef.current.getAudioTracks()[0];
+            if (audioTrack) {
+              peerConnection.addTrack(audioTrack, localStreamRef.current);
+              console.log("Local audio track added to peer connection");
+            } else {
+              console.warn("No audio track found in local stream");
+            }
+          } catch (err) {
+            console.error("Error adding local track:", err);
+            throw new Error("Failed to add audio track to peer connection");
           }
-        } catch (err) {
-          console.error("Error handling ICE state change:", err);
-        }
-      };
-
-      // Add local audio stream with error handling
-      if (localStreamRef.current) {
-        try {
-          const audioTrack = localStreamRef.current.getAudioTracks()[0];
-          if (audioTrack) {
-            peerConnection.addTrack(audioTrack, localStreamRef.current);
-            console.log("Local audio track added to peer connection");
-          } else {
-            console.warn("No audio track found in local stream");
-          }
-        } catch (err) {
-          console.error("Error adding local track:", err);
-          throw new Error("Failed to add audio track to peer connection");
-        }
-      } else {
-        throw new Error("No local audio stream available");
-      }
-
-      // Create and set local description (offer)
-      console.log("Creating SDP offer...");
-      const offer = await peerConnection.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false,
-      });
-      await peerConnection.setLocalDescription(offer);
-
-      // Send SDP offer to OpenAI Realtime API with timeout
-      console.log("Sending SDP offer to OpenAI...");
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      let answerSdp: string;
-      
-      try {
-        const response = await fetch(
-          "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${ephemeralKey}`,
-              "Content-Type": "application/sdp",
-              "OpenAI-Beta": "realtime=v1",
-            },
-            body: offer.sdp,
-            signal: controller.signal,
-          }
-        );
-        clearTimeout(timeoutId);
-        
-        console.log("Response:", response);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`SDP exchange failed: ${response.status} ${errorText}`);
-        }
-
-        // Get SDP answer from OpenAI
-        answerSdp = await response.text();
-        console.log("Received SDP answer from OpenAI");
-        const location = response.headers.get("Location")?.split("/").pop();
-        //send location to backend
-        await store.dispatch(sendLocation(location || "", ephemeralKey || ""));
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        if (fetchError.name === 'AbortError') {
-          throw new Error("Connection timeout - please try again");
-        }
-        throw fetchError;
-      }
-
-      // Set remote description (answer) with error handling
-      console.log("Setting remote description...");
-      
-      // Check if peer connection is still valid before setting remote description
-      if (!peerConnection || peerConnection.signalingState === "closed") {
-        throw new Error("Peer connection is no longer valid");
-      }
-      
-      const answer = new RTCSessionDescription({
-        type: "answer",
-        sdp: answerSdp,
-      });
-
-      try {
-        await peerConnection.setRemoteDescription(answer);
-        console.log("Remote description set successfully");
-      } catch (setRemoteError) {
-        console.error("Failed to set remote description:", setRemoteError);
-        throw new Error(`Failed to set remote description: ${setRemoteError}`);
-      }
-
-      console.log("WebRTC connection established successfully");
-      
-      // Reset connecting flag on success
-      isConnectingRef.current = false;
-
-      // Add a small delay to ensure connection is stable
-      setTimeout(() => {
-        if (
-          peerConnectionRef.current?.iceConnectionState === "connected" ||
-          peerConnectionRef.current?.iceConnectionState === "completed"
-        ) {
-          console.log("Connection verified as stable");
-        }
-      }, 1000);
-    } catch (err) {
-      console.error("Failed to connect to OpenAI Realtime API:", err);
-
-      // Clean up the failed connection
-      if (peerConnection) {
-        try {
-          peerConnection.close();
-        } catch (closeErr) {
-          console.error("Error closing peer connection:", closeErr);
-        }
-      }
-
-      // Provide specific error messages
-      let errorMessage = "Connection failed";
-      if (err instanceof Error) {
-        if (err.message.includes("SDP")) {
-          errorMessage = "Failed to establish audio connection with AI service";
-        } else if (err.message.includes("No local audio stream")) {
-          errorMessage = "Microphone access required for voice chat";
-        } else if (err.message.includes("ephemeral")) {
-          errorMessage = "Failed to authenticate with AI service";
         } else {
-          errorMessage = `Connection error: ${err.message}`;
+          throw new Error("No local audio stream available");
         }
+
+        // Create and set local description (offer)
+        console.log("Creating SDP offer...");
+        const offer = await peerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false,
+        });
+        await peerConnection.setLocalDescription(offer);
+
+        // Send SDP offer to OpenAI Realtime API with timeout
+        console.log("Sending SDP offer to OpenAI...");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        let answerSdp: string;
+
+        try {
+          const response = await fetch(
+            "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${ephemeralKey}`,
+                "Content-Type": "application/sdp",
+                "OpenAI-Beta": "realtime=v1",
+              },
+              body: offer.sdp,
+              signal: controller.signal,
+            }
+          );
+          clearTimeout(timeoutId);
+
+          console.log("Response:", response);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `SDP exchange failed: ${response.status} ${errorText}`
+            );
+          }
+
+          // Get SDP answer from OpenAI
+          answerSdp = await response.text();
+          console.log("Received SDP answer from OpenAI");
+          const location = response.headers.get("Location")?.split("/").pop();
+          //send location to backend
+          await store.dispatch(
+            sendLocation(location || "", ephemeralKey || "")
+          );
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === "AbortError") {
+            throw new Error("Connection timeout - please try again");
+          }
+          throw fetchError;
+        }
+
+        // Set remote description (answer) with error handling
+        console.log("Setting remote description...");
+
+        // Check if peer connection is still valid before setting remote description
+        if (!peerConnection || peerConnection.signalingState === "closed") {
+          throw new Error("Peer connection is no longer valid");
+        }
+
+        const answer = new RTCSessionDescription({
+          type: "answer",
+          sdp: answerSdp,
+        });
+
+        try {
+          await peerConnection.setRemoteDescription(answer);
+          console.log("Remote description set successfully");
+        } catch (setRemoteError) {
+          console.error("Failed to set remote description:", setRemoteError);
+          throw new Error(
+            `Failed to set remote description: ${setRemoteError}`
+          );
+        }
+
+        console.log("WebRTC connection established successfully");
+
+        // Reset connecting flag on success
+        isConnectingRef.current = false;
+
+        // Add a small delay to ensure connection is stable
+        setTimeout(() => {
+          if (
+            peerConnectionRef.current?.iceConnectionState === "connected" ||
+            peerConnectionRef.current?.iceConnectionState === "completed"
+          ) {
+            console.log("Connection verified as stable");
+          }
+        }, 1000);
+      } catch (err) {
+        console.error("Failed to connect to OpenAI Realtime API:", err);
+
+        // Clean up the failed connection
+        if (peerConnection) {
+          try {
+            peerConnection.close();
+          } catch (closeErr) {
+            console.error("Error closing peer connection:", closeErr);
+          }
+        }
+
+        // Provide specific error messages
+        let errorMessage = "Connection failed";
+        if (err instanceof Error) {
+          if (err.message.includes("SDP")) {
+            errorMessage =
+              "Failed to establish audio connection with AI service";
+          } else if (err.message.includes("No local audio stream")) {
+            errorMessage = "Microphone access required for voice chat";
+          } else if (err.message.includes("ephemeral")) {
+            errorMessage = "Failed to authenticate with AI service";
+          } else {
+            errorMessage = `Connection error: ${err.message}`;
+          }
+        }
+
+        setError(errorMessage);
+        setConnectionState("error");
+
+        // Reset refs and connecting flag
+        peerConnectionRef.current = null;
+        dataChannelRef.current = null;
+        isConnectingRef.current = false;
       }
-
-      setError(errorMessage);
-      setConnectionState("error");
-
-      // Reset refs and connecting flag
-      peerConnectionRef.current = null;
-      dataChannelRef.current = null;
-      isConnectingRef.current = false;
-    }
-  }, [setConnectionState, setError, setupDataChannel]);
+    },
+    [setConnectionState, setError, setupDataChannel]
+  );
 
   // Cleanup resources
   const cleanup = useCallback(() => {
@@ -400,7 +419,7 @@ export const useWebRTC = (
       // Close data channel first
       if (dataChannelRef.current) {
         try {
-          if (dataChannelRef.current.readyState !== 'closed') {
+          if (dataChannelRef.current.readyState !== "closed") {
             dataChannelRef.current.close();
           }
         } catch (err) {
@@ -412,7 +431,7 @@ export const useWebRTC = (
       // Close peer connection
       if (peerConnectionRef.current) {
         try {
-          if (peerConnectionRef.current.signalingState !== 'closed') {
+          if (peerConnectionRef.current.signalingState !== "closed") {
             peerConnectionRef.current.close();
           }
         } catch (err) {

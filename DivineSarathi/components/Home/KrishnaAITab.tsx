@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { ConnectionState } from "@/types/audio";
 import { ChatMessage } from "@/types/audio";
@@ -35,6 +36,8 @@ const KrishnaAITab = ({
   isKrishnaInterfaceOpen,
   setIsKrishnaInterfaceOpen,
   storyTitle,
+  isUserMuted,
+  setIsUserMuted,
 }: {
   fullscreen: boolean;
   setSelectedTab: (tab: string) => void;
@@ -50,6 +53,8 @@ const KrishnaAITab = ({
   isKrishnaInterfaceOpen: boolean;
   setIsKrishnaInterfaceOpen: (isOpen: boolean) => void;
   storyTitle: string;
+  isUserMuted: boolean;
+  setIsUserMuted: (isMuted: boolean) => void;
 }) => {
   // Animated values for container, top section, and bottom section
   const containerAnim = useRef(new Animated.Value(0)).current; // 0: mini, 1: fullscreen
@@ -106,6 +111,11 @@ const KrishnaAITab = ({
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(scrollPosition / width);
     setActiveCarouselIndex(newIndex);
+  };
+
+  const mutePressedHandler = () => {
+    setIsUserMuted(!isUserMuted);
+    onMuteToggle();
   };
 
   // Interpolate container style
@@ -221,14 +231,18 @@ const KrishnaAITab = ({
               numberOfLines={2}
               ellipsizeMode="tail"
             >
-              {(!fullscreen && storyTitle.length > 20) ? storyTitle.slice(0, 20) + "..." : storyTitle}
+              {!fullscreen && storyTitle.length > 20
+                ? storyTitle.slice(0, 20) + "..."
+                : storyTitle}
             </Text>
           </TouchableOpacity>
           {/* Play and mic buttons on the right (mini mode only) */}
           {!fullscreen && (
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <TouchableOpacity
+                disabled={connectionState === "connecting"}
                 onPress={() => {
+                  if (connectionState === "connecting") return;
                   onConnectionToggle("");
                   if (!fullscreen) {
                     setSelectedTab("chat");
@@ -236,15 +250,17 @@ const KrishnaAITab = ({
                 }}
                 style={{ marginRight: 8 }}
               >
-                {connectionState === "connected" ||
-                connectionState === "speaking" ||
-                connectionState === "listening" ? (
+                {connectionState === "connecting" ? (
+                  <ActivityIndicator size={24} color="#000" />
+                ) : connectionState === "connected" ||
+                  connectionState === "speaking" ||
+                  connectionState === "listening" ? (
                   <Ionicons name="stop" size={24} color="#000" />
                 ) : (
                   <Ionicons name="play-outline" size={24} color="#000" />
                 )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onMuteToggle()}>
+              <TouchableOpacity onPress={() => mutePressedHandler()}>
                 {isMuted ? (
                   <Ionicons name="mic-off" size={24} color="#000" />
                 ) : (
@@ -334,7 +350,14 @@ const KrishnaAITab = ({
                 alignSelf: "center",
               }}
             >
-              <TouchableOpacity onPress={() => onConnectionToggle("")}>
+              <TouchableOpacity
+                disabled={connectionState === "connecting"}
+                onPress={() =>
+                  connectionState === "connecting"
+                    ? null
+                    : onConnectionToggle("")
+                }
+              >
                 <View
                   style={{
                     flexDirection: "row",
@@ -345,16 +368,18 @@ const KrishnaAITab = ({
                     paddingVertical: 12,
                   }}
                 >
-                  {connectionState === "connected" ||
-                  connectionState === "speaking" ||
-                  connectionState === "listening" ? (
+                  {connectionState === "connecting" ? (
+                    <ActivityIndicator size={32} color="#000" />
+                  ) : connectionState === "connected" ||
+                    connectionState === "speaking" ||
+                    connectionState === "listening" ? (
                     <Ionicons name="stop" size={32} color="#000" />
                   ) : (
                     <Ionicons name="play-outline" size={32} color="#000" />
                   )}
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onMuteToggle()}>
+              <TouchableOpacity onPress={() => mutePressedHandler()}>
                 <View
                   style={{
                     flexDirection: "row",
