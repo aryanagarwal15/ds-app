@@ -76,39 +76,36 @@ export default function HomeV3() {
   }, [toggleMute]);
 
   // Handle connect/disconnect
-  const handleConnectionToggle = useCallback(
-    async (storyId: string) => {
-      if (connectionState === "idle" || connectionState === "error") {
-        const permissionGranted = await checkPermissions();
-        if (permissionGranted) {
-          setActiveConversation("");
-          setChatTranscript([]);
-          setIsKrishnaInterfaceOpen(true);
-          await connectToRealtime(storyId);
-        }
-      } else {
-        cleanup();
-        console.log("connectionState", connectionState);
-        cleanupLocalStream();
-        setIsRecording(false);
-        setTranscript("");
-        setResponse("");
-        stopPulseAnimation();
-        stopRippleAnimation();
-        setIsMuted(false);
-        setStoryTitle("Ask Krishna Anything...");
+  const handleConnectionToggle = useCallback(async () => {
+    if (connectionState === "idle" || connectionState === "error") {
+      const permissionGranted = await checkPermissions();
+      if (permissionGranted) {
+        setActiveConversation("");
+        setChatTranscript([]);
+        setIsKrishnaInterfaceOpen(true);
+        await connectToRealtime("", "");
       }
-    },
-    [
-      connectionState,
-      checkPermissions,
-      connectToRealtime,
-      cleanup,
-      cleanupLocalStream,
-      stopPulseAnimation,
-      stopRippleAnimation,
-    ]
-  );
+    } else {
+      cleanup();
+      console.log("connectionState", connectionState);
+      cleanupLocalStream();
+      setIsRecording(false);
+      setTranscript("");
+      setResponse("");
+      stopPulseAnimation();
+      stopRippleAnimation();
+      setIsMuted(false);
+      setStoryTitle("Ask Krishna Anything...");
+    }
+  }, [
+    connectionState,
+    checkPermissions,
+    connectToRealtime,
+    cleanup,
+    cleanupLocalStream,
+    stopPulseAnimation,
+    stopRippleAnimation,
+  ]);
 
   // Play background music while establishing connection; stop when connected or finished
   useEffect(() => {
@@ -240,13 +237,17 @@ export default function HomeV3() {
       connectionState === "listening"
     ) {
       console.log("closing connection");
-      handleConnectionToggle("");
+      handleConnectionToggle();
       //await for 2 sec
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   };
 
-  const handleStoryClick = async (storyId: number, storyTitle: string) => {
+  const handleStoryClick = async (
+    storyId: number,
+    storyTitle: string,
+    storyCategory: string
+  ) => {
     await closeConnection();
     console.log("closing connection done");
     console.log("opening new connection");
@@ -259,7 +260,7 @@ export default function HomeV3() {
       setIsKrishnaInterfaceOpen(true);
       setStoryTitle(storyTitle);
       setSelectedTab("chat");
-      await connectToRealtime(storyId.toString());
+      await connectToRealtime(storyId.toString(), storyCategory.toString());
     }
   };
 

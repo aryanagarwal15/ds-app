@@ -22,7 +22,11 @@ import DailyStories, { DailyStory } from "../DailyStories/DailyStories";
 const HomeTab = ({
   onStoryClick,
 }: {
-  onStoryClick: (storyId: number, storyTitle: string) => void;
+  onStoryClick: (
+    storyId: number,
+    storyTitle: string,
+    storyCategory: string
+  ) => void;
 }) => {
   const [subCategories, setSubCategories] = useState<string[]>([]);
   const [dailyStories, setDailyStories] = useState<DailyStory[]>([]);
@@ -30,6 +34,14 @@ const HomeTab = ({
   const [subCategory2, setSubCategory2] = useState<{ [key: string]: Story[] }>(
     {}
   );
+
+  const handleDailyStoryClick = (storyId: number, storyTitle: string) => {
+    onStoryClick(storyId, storyTitle, "Daily Stories");
+  };
+
+  const handleGeetaStoryClick = (storyId: number, storyTitle: string) => {
+    onStoryClick(storyId, storyTitle, "Geeta");
+  };
 
   useEffect(() => {
     fetchCategories().then((data) => {
@@ -90,7 +102,7 @@ const HomeTab = ({
           </View>
           <DailyStories
             dailyStories={dailyStories}
-            onStoryClick={onStoryClick}
+            onStoryClick={handleDailyStoryClick}
           />
           <Text style={styles.geetaForDailyLife}>Geeta For Daily Life</Text>
           <CategorySelector
@@ -101,7 +113,7 @@ const HomeTab = ({
           {Object.entries(subCategory2).map(([subCategory2, stories]) => (
             <StorySubsection
               key={subCategory2}
-              onStoryClick={onStoryClick}
+              onStoryClick={handleGeetaStoryClick}
               sectionTitle={subCategory2}
               stories={stories}
             />

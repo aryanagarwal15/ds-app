@@ -164,7 +164,7 @@ export const useWebRTC = (
 
   // Connect to OpenAI Realtime API using WebRTC
   const connectToRealtime = useCallback(
-    async (storyId: string) => {
+    async (storyId: string, storyCategory: string) => {
       // Prevent multiple simultaneous connection attempts
       if (isConnectingRef.current) {
         console.log("Connection already in progress, ignoring request");
@@ -193,7 +193,7 @@ export const useWebRTC = (
         // Get ephemeral key from backend
         console.log("Fetching ephemeral key...");
         console.log("Story ID:", storyId);
-        const ephemeralKey = await fetchEphemeralKey(storyId || "");
+        const ephemeralKey = await fetchEphemeralKey(storyId || "", storyCategory || "");
         console.log("Ephemeral key obtained");
 
         // Create RTCPeerConnection with error handling
