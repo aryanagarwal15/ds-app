@@ -11,6 +11,8 @@ import {
   StatusBar,
   TextInput,
   Image,
+  KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
@@ -135,153 +137,169 @@ export default function EmailLogin() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#FBF7EF" />
-      <View style={styles.gradientBackground}>
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBack}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-back" size={24} color="#FF8100" />
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.gradientBackground}>
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBack}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={24} color="#FF8100" />
+          </TouchableOpacity>
 
-        {/* Sacred Om Symbol */}
-        <View style={styles.headerSection}>
-          <Image
-            source={require("../../assets/images/logo_no_background.png")}
-            style={styles.logo}
-          />
-          <Text style={styles.sanskritText}>दिव्य सारथी</Text>
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.contentSection}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.mainTitle}>
-              {step === "email" ? "Enter Your Email" : "Enter OTP"}
-            </Text>
-            <Text style={styles.subtitle}>
-              {step === "email"
-                ? "We'll send you a verification code"
-                : `Code sent to ${email}`}
-            </Text>
+          {/* Sacred Om Symbol */}
+          <View style={styles.headerSection}>
+            <Image
+              source={require("../../assets/images/logo_no_background.png")}
+              style={styles.logo}
+            />
+            <Text style={styles.sanskritText}>दिव्य सारथी</Text>
           </View>
 
-          <View style={styles.formContainer}>
-            {step === "email" ? (
-              <View style={styles.inputContainer}>
-                <LinearGradient
-                  colors={[
-                    "rgba(255, 255, 255, 0.15)",
-                    "rgba(255, 255, 255, 0.1)",
-                  ]}
-                  style={styles.inputGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons
-                    name="mail-outline"
-                    size={24}
-                    color="#69585F"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your email"
-                    placeholderTextColor="#69585F"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!loading}
-                  />
-                </LinearGradient>
-              </View>
-            ) : (
-              <View style={styles.inputContainer}>
-                <LinearGradient
-                  colors={[
-                    "rgba(255, 255, 255, 0.15)",
-                    "rgba(255, 255, 255, 0.1)",
-                  ]}
-                  style={styles.inputGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons
-                    name="key-outline"
-                    size={24}
-                    color="#69585F"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter 6-digit OTP"
-                    placeholderTextColor="#69585F"
-                    value={otp}
-                    onChangeText={setOtp}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    editable={!loading}
-                  />
-                </LinearGradient>
-                <TouchableOpacity
-                  style={styles.resendButton}
-                  onPress={handleSendOtp}
-                  disabled={loading}
-                >
-                  <Text style={styles.resendText}>Resend OTP</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.authSection}>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFD700" />
-                <Text style={styles.loadingText}>
-                  {step === "email" ? "Sending OTP..." : "Verifying OTP..."}
+          {/* Main Content */}
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.contentSection}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.mainTitle}>
+                  {step === "email" ? "Enter Your Email" : "Enter OTP"}
+                </Text>
+                <Text style={styles.subtitle}>
+                  {step === "email"
+                    ? "We'll send you a verification code"
+                    : `Code sent to ${email}`}
                 </Text>
               </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={step === "email" ? handleSendOtp : handleVerifyOtp}
-                activeOpacity={0.8}
-              >
-                <View style={styles.buttonGradient}>
-                  <Text style={styles.buttonText}>
-                    {step === "email" ? "Send OTP" : "Verify & Continue"}
-                  </Text>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={20}
-                    color="#fff"
-                    style={styles.buttonIcon}
-                  />
-                </View>
-              </TouchableOpacity>
-            )}
 
-            <Text style={styles.blessingsText}>
-              <Text style={styles.blessingsTranslation}>
-                May all beings be happy and free from illness
-              </Text>
-            </Text>
-          </View>
+              <View style={styles.formContainer}>
+                {step === "email" ? (
+                  <View style={styles.inputContainer}>
+                    <LinearGradient
+                      colors={[
+                        "rgba(255, 255, 255, 0.15)",
+                        "rgba(255, 255, 255, 0.1)",
+                      ]}
+                      style={styles.inputGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Ionicons
+                        name="mail-outline"
+                        size={24}
+                        color="#69585F"
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter your email"
+                        placeholderTextColor="#69585F"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        editable={!loading}
+                        returnKeyType="done"
+                      />
+                    </LinearGradient>
+                  </View>
+                ) : (
+                  <View style={styles.inputContainer}>
+                    <LinearGradient
+                      colors={[
+                        "rgba(255, 255, 255, 0.15)",
+                        "rgba(255, 255, 255, 0.1)",
+                      ]}
+                      style={styles.inputGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Ionicons
+                        name="key-outline"
+                        size={24}
+                        color="#69585F"
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter 6-digit OTP"
+                        placeholderTextColor="#69585F"
+                        value={otp}
+                        onChangeText={setOtp}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        editable={!loading}
+                      />
+                    </LinearGradient>
+                    <TouchableOpacity
+                      style={styles.resendButton}
+                      onPress={handleSendOtp}
+                      disabled={loading}
+                    >
+                      <Text style={styles.resendText}>Resend OTP</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.authSection}>
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#FFD700" />
+                    <Text style={styles.loadingText}>
+                      {step === "email"
+                        ? "Sending OTP..."
+                        : "Verifying OTP..."}
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.continueButton}
+                    onPress={step === "email" ? handleSendOtp : handleVerifyOtp}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.buttonGradient}>
+                      <Text style={styles.buttonText}>
+                        {step === "email" ? "Send OTP" : "Verify & Continue"}
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={20}
+                        color="#fff"
+                        style={styles.buttonIcon}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                <Text style={styles.blessingsText}>
+                  <Text style={styles.blessingsTranslation}>
+                    May all beings be happy and free from illness
+                  </Text>
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FBF7EF",
+    paddingTop: Platform.OS === "ios" ? 50 : 30,
   },
   gradientBackground: {
     flex: 1,
@@ -291,6 +309,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     padding: 8,
+    zIndex: 9,
+    top: Platform.OS === "ios" ? 50 : 30,
   },
   headerSection: {
     alignItems: "center",
@@ -302,18 +322,23 @@ const styles = StyleSheet.create({
     height: 88,
     marginBottom: 16,
   },
-
   sanskritText: {
     fontSize: 24,
     color: "#FF8100",
     fontWeight: "600",
     fontFamily: "Roboto",
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingBottom: 24,
+  },
   contentSection: {
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: 30,
     paddingVertical: 20,
+    minHeight: height * 0.7,
   },
   titleContainer: {
     alignItems: "center",
@@ -337,6 +362,7 @@ const styles = StyleSheet.create({
   formContainer: {
     alignItems: "center",
     marginVertical: 20,
+    width: "100%",
   },
   inputContainer: {
     width: "100%",
@@ -378,6 +404,7 @@ const styles = StyleSheet.create({
   },
   authSection: {
     alignItems: "center",
+    justifyContent: "flex-end",
   },
   loadingContainer: {
     alignItems: "center",

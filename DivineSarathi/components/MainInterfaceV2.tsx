@@ -356,7 +356,7 @@ const MainInterfaceV2: React.FC<MainInterfaceV2Props> = ({
           {/* Geeta for Daily Life Section */}
           {isInitialized && (
             <View style={styles.geetaSection}>
-              <Text style={styles.geetaSectionTitle}>Geeta for daily life</Text>
+              <Text style={styles.geetaSectionTitle}>Gita for daily life</Text>
 
               {/* Categories Loading */}
               {loadingStates.categories && (

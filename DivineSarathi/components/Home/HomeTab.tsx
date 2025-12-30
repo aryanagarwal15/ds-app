@@ -40,7 +40,7 @@ const HomeTab = ({
   };
 
   const handleGeetaStoryClick = (storyId: number, storyTitle: string) => {
-    onStoryClick(storyId, storyTitle, "Geeta");
+    onStoryClick(storyId, storyTitle, "Gita");
   };
 
   useEffect(() => {
@@ -104,7 +104,7 @@ const HomeTab = ({
             dailyStories={dailyStories}
             onStoryClick={handleDailyStoryClick}
           />
-          <Text style={styles.geetaForDailyLife}>Geeta For Daily Life</Text>
+          <Text style={styles.geetaForDailyLife}>Gita For Daily Life</Text>
           <CategorySelector
             categories={subCategories}
             categorySelected={selectedCategory}

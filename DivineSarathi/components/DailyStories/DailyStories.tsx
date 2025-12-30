@@ -200,7 +200,10 @@ const DailyStories: React.FC<DailyStoriesProps> = ({
                   />
                 )}
 
-                <Image source={require("../../assets/images/rudraksha.png")} />
+                <Image
+                  source={require("../../assets/images/rudraksha.png")}
+                  style={{ height: 35, width: 35 }}
+                />
                 <Image
                   source={require("../../assets/images/rudraksha_line.png")}
                 />
